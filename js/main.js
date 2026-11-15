@@ -509,65 +509,65 @@ prayerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 // ২৪ ঘণ্টার সময়কে ১২ ঘণ্টার (AM/PM) ফরম্যাটে রূপান্তর
 function formatTime12Hour(time24) {
-if (!time24) return "";
-var cleanTime = time24.split(" ")[0];
-var parts = cleanTime.split(":");
-var hours = parseInt(parts[0], 10);
-var minutes = parts[1];
-var ampm = hours >= 12 ? "PM" : "AM";
-hours = hours % 12 || 12;
-return hours + ":" + minutes + " " + ampm;
+    if (!time24) return "";
+    var cleanTime = time24.split(" ").shift();
+    var parts = cleanTime.split(":");
+    var hours = parseInt(parts.shift(), 10);
+    var minutes = parts.shift();
+    var ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12;
+    return hours + ":" + minutes + " " + ampm;
 }
 // Aladhan API থেকে লাইভ নামাজ, সূর্যোদয়, সেহরি ও ইফতারের সময় আনা
 async function loadPrayerTimes(city) {
-var container = document.getElementById('prayer-cards-container');
-var specialBar = document.getElementById('sehri-iftar-bar');
-var dateDisplay = document.getElementById('prayer-date-display');
-if (!container) return;
-container.innerHTML = "সময়সূচি আপডেট হচ্ছে...";
-try {
-var apiUrl = ["https:/", "://aladhan.com", "v1", "timingsByCity"].join("/") + "?city=" + encodeURIComponent(city) + "&country=Bangladesh&method=1";
-var response = await fetch(apiUrl);
-var result = await response.json();
-if (result && result.data) {
-var timings = result.data.timings;
-var dateInfo = result.data.date;
-if (dateDisplay) {
-dateDisplay.innerText = "📅 " + dateInfo.readable + " | 🌙 " + dateInfo.hijri.day + " " + dateInfo.hijri.month.en + ", " + dateInfo.hijri.year + " হিজরি";
-}
-if (specialBar) {
-specialBar.innerHTML =
-'' +
-'🌙 সেহরির শেষ সময়' +
-'' + formatTime12Hour(timings.Imsak) + '' +
-'' +
-'' +
-'🌅 সূর্যোদয় (Sunrise)' +
-'' + formatTime12Hour(timings.Sunrise) + '' +
-'' +
-'' +
-'🌇 ইফতারের সময়' +
-'' + formatTime12Hour(timings.Maghrib) + '' +
-'';
-}
-var prayers = [
-{ name: "ফজর (Fajr)", time: timings.Fajr, icon: "🌌" },
-{ name: "যোহর (Dhuhr)", time: timings.Dhuhr, icon: "☀️" },
-{ name: "আসর (Asr)", time: timings.Asr, icon: "🌤️" },
-{ name: "মাগরিব (Maghrib)", time: timings.Maghrib, icon: "🌇" },
-{ name: "ইশা (Isha)", time: timings.Isha, icon: "🌃" }
-];
-var cardsHtml = "";
-prayers.forEach(function(p) {
-cardsHtml += '' +
-'' + p.icon + '' +
-'' + p.name + '' +
-'' + formatTime12Hour(p.time) + '' +
-'';
-});
-container.innerHTML = cardsHtml;
-}
-} catch (error) {
-container.innerHTML = "সময়সূচি লোড করতে সমস্যা হচ্ছে, ইন্টারনেট সংযোগ চেক করুন।";
-}
+    var container = document.getElementById('prayer-cards-container');
+    var specialBar = document.getElementById('sehri-iftar-bar');
+    var dateDisplay = document.getElementById('prayer-date-display');
+
+    if (!container) return;
+    container.innerHTML = "<p style='text-align:center; color:#16a085; grid-column: 1 / -1;'>সময়সূচি আপডেট হচ্ছে...</p>";
+
+    try {
+        var domain = "://aladhan.com";
+        var apiUrl = "https://" + domain + "/v1/timingsByCity?city=" + encodeURIComponent(city) + "&country=Bangladesh&method=1";
+        var response = await fetch(apiUrl);
+        var result = await response.json();
+
+        if (result && result.data) {
+            var timings = result.data.timings;
+            var dateInfo = result.data.date;
+
+            if (dateDisplay) {
+                dateDisplay.innerText = "📅 " + dateInfo.readable + " | 🌙 " + dateInfo.hijri.day + " " + dateInfo.hijri.month.en + ", " + dateInfo.hijri.year + " হিজরি";
+            }
+
+            if (specialBar) {
+                specialBar.innerHTML = 
+                    '<div class="special-time-card"><span>🌙 সেহরির শেষ সময়</span><strong>' + formatTime12Hour(timings.Imsak) + '</strong></div>' +
+                    '<div class="special-time-card"><span>🌅 সূর্যোদয় (Sunrise)</span><strong>' + formatTime12Hour(timings.Sunrise) + '</strong></div>' +
+                    '<div class="special-time-card"><span>🌇 ইফতারের সময়</span><strong>' + formatTime12Hour(timings.Maghrib) + '</strong></div>';
+            }
+
+            var prayers = [
+                { name: "ফজর (Fajr)", time: timings.Fajr, icon: "🌌" },
+                { name: "যোহর (Dhuhr)", time: timings.Dhuhr, icon: "☀️" },
+                { name: "আসর (Asr)", time: timings.Asr, icon: "🌤️" },
+                { name: "মাগরিব (Maghrib)", time: timings.Maghrib, icon: "🌇" },
+                { name: "ইশা (Isha)", time: timings.Isha, icon: "🌃" }
+            ];
+
+            var cardsHtml = "";
+            prayers.forEach(function(p) {
+                cardsHtml += '<div class="prayer-card">' +
+                    '<div class="prayer-icon">' + p.icon + '</div>' +
+                    '<div class="prayer-name">' + p.name + '</div>' +
+                    '<div class="prayer-time">' + formatTime12Hour(p.time) + '</div>' +
+                '</div>';
+            });
+
+            container.innerHTML = cardsHtml;
+        }
+    } catch (error) {
+        container.innerHTML = "<p style='text-align:center; color:red; grid-column: 1 / -1;'>এরর: " + error.message + "</p>";
+    }
 }
