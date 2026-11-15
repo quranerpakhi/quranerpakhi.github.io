@@ -710,3 +710,86 @@ header.site-header {
         grid-template-columns: 1fr;
     }
 }
+/* নামাজের সময়সূচি বাটনের বর্ডার কালার */
+.opt-btn.prayer { border-left: 5px solid #16a085; }
+
+/* সেহরি, সূর্যোদয় ও ইফতার বার */
+.sehri-iftar-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 22px;
+}
+
+.special-time-card {
+    background: linear-gradient(135deg, #f0f9f8, #e6f4f1);
+    border: 1px solid #cce7e1;
+    padding: 14px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.special-time-card span {
+    display: block;
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 4px;
+}
+
+.special-time-card strong {
+    font-size: 18px;
+    color: #008080;
+}
+
+/* ৫ ওয়াক্ত নামাজের কার্ড ডিজাইন */
+.prayer-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+}
+
+.prayer-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 18px 10px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.prayer-card:hover {
+    transform: translateY(-4px);
+    border-color: #16a085;
+}
+
+.prayer-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.prayer-name {
+    font-size: 16px;
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 6px;
+}
+
+.prayer-time {
+    font-size: 17px;
+    font-weight: 700;
+    color: #16a085;
+    background: #f4fbf9;
+    padding: 5px 10px;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+@media (max-width: 768px) {
+    .sehri-iftar-grid {
+        grid-template-columns: 1fr;
+    }
+    .prayer-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
