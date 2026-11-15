@@ -48,6 +48,7 @@
             <a href="#quran-section" onclick="toggleQuran()" class="opt-btn quran">শব্দে শব্দে কুরআন (QuranWBW)</a>
             <a href="#dua-section" onclick="toggleDua()" class="opt-btn dua">দোআ ও যিকির (Hisnul Muslim)</a>
             <a href="#qa-section" onclick="toggleQA()" class="opt-btn qa">প্রশ্ন ও উত্তর (Q&A)</a>
+            <a href="#prayer-section" onclick="togglePrayerTimes()" class="opt-btn prayer">নামাজের সময়সূচি (Prayer Times)</a>
 
         </div>
     </section>
@@ -99,6 +100,39 @@
             <!-- এখানে উত্তরসহ প্রশ্নগুলো কার্ড আকারে লোড হবে -->
             <div id="qa-list-container">
                 <p style="text-align: center; color: #666;">প্রশ্ন ও উত্তর লোড হচ্ছে...</p>
+            </div>
+        </div>
+    </section>
+    <!-- নামাজের সময়সূচি (Prayer Times) সেকশন -->
+    <section id="prayer-section" class="dictionary-container" style="display: none;">
+        <div class="dict-box" style="max-width: 900px; padding: 25px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px;">
+                <div style="text-align: left;">
+                    <h2 style="margin: 0; color: #2c3e50;">🕌 আজকের নামাজ ও সেহরি-ইফতারের সময়সূচি</h2>
+                    <p id="prayer-date-display" style="margin: 5px 0 0; color: #008080; font-size: 14px; font-weight: 600;">তারিখ লোড হচ্ছে...</p>
+                </div>
+                
+                <!-- জেলা নির্বাচন ড্রপডাউন -->
+                <div>
+                    <select id="city-select" onchange="loadPrayerTimes(this.value)" style="padding: 9px 15px; font-size: 15px; border-radius: 8px; border: 2px solid #16a085; outline: none; cursor: pointer; font-weight: 600; color: #2c3e50;">
+                        <option value="Dhaka" selected>📍 ঢাকা (Dhaka)</option>
+                        <option value="Chittagong">📍 চট্টগ্রাম (Chittagong)</option>
+                        <option value="Sylhet">📍 সিলেট (Sylhet)</option>
+                        <option value="Rajshahi">📍 রাজশাহী (Rajshahi)</option>
+                        <option value="Khulna">📍 খুলনা (Khulna)</option>
+                        <option value="Barisal">📍 বরিশাল (Barisal)</option>
+                        <option value="Rangpur">📍 রংপুর (Rangpur)</option>
+                        <option value="Mymensingh">📍 ময়মনসিংহ (Mymensingh)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- সেহরি, সূর্যোদয় ও ইফতারের হাইলাইট বার -->
+            <div id="sehri-iftar-bar" class="sehri-iftar-grid"></div>
+
+            <!-- ৫ ওয়াক্ত নামাজের কার্ড -->
+            <div id="prayer-cards-container" class="prayer-grid">
+                <p style="text-align: center; color: #666; grid-column: 1 / -1;">সময়সূচি লোড হচ্ছে...</p>
             </div>
         </div>
     </section>
