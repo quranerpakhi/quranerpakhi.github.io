@@ -502,6 +502,7 @@ function closeAllSections(exceptId) {
         'qa-section',
         'about-section',
         'contact-section'
+        'prayer-section'
     ];
 
     allSectionIds.forEach(id => {
@@ -587,4 +588,94 @@ function copyText(elementId, btnElement) {
             btnElement.style.color = "";
         }, 2000);
     });
+}
+// নামাজের সময়সূচি সেকশন খোলা ও বন্ধ করার ফাংশন
+function togglePrayerTimes() {
+    const prayerSection = document.getElementById('prayer-section');
+    if (!prayerSection) return;
+
+    if (prayerSection.style.display === 'block') {
+        prayerSection.style.display = 'none';
+    } else {
+        closeAllSections('prayer-section');
+        prayerSection.style.display = 'block';
+        const selectedCity = document.getElementById('city-select').value;
+        loadPrayerTimes(selectedCity);
+        prayerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+// ২৪ ঘণ্টার সময়কে ১২ ঘণ্টার (AM/PM) ফরম্যাটে রূপান্তর করার ফাংশন
+function formatTime12Hour(time24) {
+    if (!time24) return "";
+    const cleanTime = time24.split(" ").at(0);
+    let [hours, minutes] = cleanTime.split(":");
+    hours = parseInt(hours, 10);
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12;
+    return `${hours}:${minutes} ${ampm}`;
+}
+
+// Aladhan API থেকে লাইভ নামাজ, সূর্যোদয়, সেহরি ও ইফতারের সময় আনার ফাংশন
+async function loadPrayerTimes(city) {
+    const container = document.getElementById('prayer-cards-container');
+    const specialBar = document.getElementById('sehri-iftar-bar');
+    const dateDisplay = document.getElementById('prayer-date-display');
+
+    container.innerHTML = "<p style='text-align:center; color:#16a085; grid-column: 1 / -1;'>সময়সূচি আপডেট হচ্ছে...</p>";
+
+    try {
+        // method=1 (University of Islamic Sciences, Karachi - বাংলাদেশ ও উপমহাদেশের জন্য প্রযোজ্য)
+        const apiUrl = `https://aladhan.com{encodeURIComponent(city)}&country=Bangladesh&method=1`;
+        const response = await fetch(apiUrl);
+        const result = await response.json();
+
+        if (result && result.data) {
+            const timings = result.data.timings;
+            const dateInfo = result.data.date;
+
+            // ইংরেজি ও হিজরি তারিখ দেখানো
+            dateDisplay.innerText = `📅 ${dateInfo.readable} | 🌙 ${dateInfo.hijri.day} ${dateInfo.hijri.month.en}, ${dateInfo.hijri.year} হিজরি`;
+
+            // সেহরি (Imsak/Fajr), সূর্যোদয় (Sunrise) ও ইফতার (Maghrib) কার্ড
+            specialBar.innerHTML = `
+                <div class="special-time-card">
+                    <span>🌙 সেহরির শেষ সময়</span>
+                    <strong>${formatTime12Hour(timings.Imsak)}</strong>
+                </div>
+                <div class="special-time-card">
+                    <span>🌅 সূর্যোদয় (Sunrise)</span>
+                    <strong>${formatTime12Hour(timings.Sunrise)}</strong>
+                </div>
+                <div class="special-time-card">
+                    <span>🌇 ইফতারের সময়</span>
+                    <strong>${formatTime12Hour(timings.Maghrib)}</strong>
+                </div>
+            `;
+
+            // ৫ ওয়াক্ত নামাজের কার্ড
+            const prayers = [
+                { name: "ফজর (Fajr)", time: timings.Fajr, icon: "🌌" },
+                { name: "যোহর (Dhuhr)", time: timings.Dhuhr, icon: "☀️" },
+                { name: "আসর (Asr)", time: timings.Asr, icon: "🌤️" },
+                { name: "মাগরিব (Maghrib)", time: timings.Maghrib, icon: "🌇" },
+                { name: "ইশা (Isha)", time: timings.Isha, icon: "🌃" }
+            ];
+
+            let cardsHtml = "";
+            prayers.forEach(p => {
+                cardsHtml += `
+                    <div class="prayer-card">
+                        <div class="prayer-icon">${p.icon}</div>
+                        <div class="prayer-name">${p.name}</div>
+                        <div class="prayer-time">${formatTime12Hour(p.time)}</div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = cardsHtml;
+        }
+    } catch (error) {
+        container.innerHTML = "<p style='text-align:center; color:red; grid-column: 1 / -1;'>সময়সূচি লোড করতে সমস্যা হচ্ছে, ইন্টারনেট সংযোগ চেক করুন।</p>";
+    }
 }
