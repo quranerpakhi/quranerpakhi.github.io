@@ -375,56 +375,71 @@ loadQAFromSheet();
 }
 }
 async function loadQAFromSheet() {
-var container = document.getElementById('qa-list-container');
-var sheetCsvUrl = "google.com";
-try {
-var response = await fetch(sheetCsvUrl);
-var csvText = await response.text();
-function parseCSVLine(text) {
-var result = [];
-var current = "";
-var inQuotes = false;
-for (var i = 0; i < text.length; i++) {
-var char = text.charAt(i);
-if (char === '"') {
-inQuotes = !inQuotes;
-} else if (char === ',' && !inQuotes) {
-result.push(current.trim());
-current = "";
-} else {
-current += char;
+    var container = document.getElementById('qa-list-container');
+    
+    // কপি করার সময় লিংক যেন নষ্ট না হয় সেজন্য নিরাপদভাবে তৈরি করা হলো
+    var sheetPath = "/spreadsheets/d/e/2PACX-1vQ39VRDr-0qn2eLHOBvr2iG1jLcsE--KIgXyWiQCptoB-6_n7uls1oYPrZkyVfbwVlrUzOb1u23tl2n/pub";
+    var sheetUrl = new URL(sheetPath, "https://" + "docs." + "google." + "com");
+    sheetUrl.searchParams.set("gid", "652661096");
+    sheetUrl.searchParams.set("single", "true");
+    sheetUrl.searchParams.set("output", "csv");
+
+    try {
+        var response = await fetch(sheetUrl.toString());
+        var csvText = await response.text();
+        
+        function parseCSVLine(text) {
+            var result = [];
+            var current = "";
+            var inQuotes = false;
+
+            for (var i = 0; i < text.length; i++) {
+                var char = text.charAt(i);
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = "";
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+            return result;
+        }
+
+        var rows = csvText.split(/\r?\n/).slice(1);
+        var htmlContent = "";
+        var count = 0;
+
+        rows.reverse().forEach(function(row) {
+            if (!row.trim()) return;
+            
+            var cols = parseCSVLine(row);
+            var studentName = cols.at(1) || "শিক্ষার্থী";
+            var question = cols.at(2) || "";
+            var answer = cols.at(3) || "";
+
+            if (question && answer) {
+                count++;
+                htmlContent += '<div class="qa-card">' +
+                    '<div class="qa-question">প্রশ্ন: ' + question + '</div>' +
+                    '<div class="qa-meta">প্রশ্নকারী: ' + studentName + '</div>' +
+                    '<div class="qa-answer"><strong>উত্তর:</strong> ' + answer + '</div>' +
+                '</div>';
+            }
+        });
+
+        if (count > 0) {
+            container.innerHTML = htmlContent;
+        } else {
+            container.innerHTML = "<p style='text-align:center; color:#666;'>এখনো কোনো প্রশ্নোত্তর প্রকাশিত হয়নি। প্রথম প্রশ্নটি আপনি করুন!</p>";
+        }
+    } catch (error) {
+        container.innerHTML = "<p style='text-align:center; color:red;'>প্রশ্নোত্তর লোড করতে সমস্যা হচ্ছে।</p>";
+    }
 }
-}
-result.push(current.trim());
-return result;
-}
-var rows = csvText.split(/\r?\n/).slice(1);
-var htmlContent = "";
-var count = 0;
-rows.reverse().forEach(function(row) {
-if (!row.trim()) return;
-var cols = parseCSVLine(row);
-var studentName = cols[1] || "শিক্ষার্থী";
-var question = cols[2] || "";
-var answer = cols[3] || "";
-if (question && answer) {
-count++;
-htmlContent += '' +
-'প্রশ্ন: ' + question + '' +
-'প্রশ্নকারী: ' + studentName + '' +
-'উত্তর: ' + answer + '' +
-'';
-}
-});
-if (count > 0) {
-container.innerHTML = htmlContent;
-} else {
-container.innerHTML = "এখনো কোনো প্রশ্নোত্তর প্রকাশিত হয়নি। প্রথম প্রশ্নটি আপনি করুন!";
-}
-} catch (error) {
-container.innerHTML = "প্রশ্নোত্তর লোড করতে সমস্যা হচ্ছে।";
-}
-}
+
 // About Us সেকশন খোলা এবং বন্ধ করার ফাংশন
 function toggleAbout() {
 var aboutSection = document.getElementById('about-section');
