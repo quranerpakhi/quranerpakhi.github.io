@@ -592,20 +592,26 @@ function copyText(elementId, btnElement) {
 // নামাজের সময়সূচি সেকশন খোলা ও বন্ধ করার ফাংশন
 function togglePrayerTimes() {
     const prayerSection = document.getElementById('prayer-section');
-    if (!prayerSection) return;
+    if (!prayerSection) {
+        alert("index.html ফাইলে prayer-section পাওয়া যাচ্ছে না!");
+        return;
+    }
 
     if (prayerSection.style.display === 'block') {
         prayerSection.style.display = 'none';
     } else {
-        closeAllSections('prayer-section');
+        if (typeof closeAllSections === "function") {
+            closeAllSections('prayer-section');
+        }
         prayerSection.style.display = 'block';
-        const selectedCity = document.getElementById('city-select').value;
+        const citySelect = document.getElementById('city-select');
+        const selectedCity = citySelect ? citySelect.value : 'Dhaka';
         loadPrayerTimes(selectedCity);
         prayerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 }
 
-// ২৪ ঘণ্টার সময়কে ১২ ঘণ্টার (AM/PM) ফরম্যাটে রূপান্তর করার ফাংশন
+// ২৪ ঘণ্টার সময়কে ১২ ঘণ্টার (AM/PM) ফরম্যাটে রূপান্তর
 function formatTime12Hour(time24) {
     if (!time24) return "";
     const cleanTime = time24.split(" ").at(0);
@@ -616,16 +622,16 @@ function formatTime12Hour(time24) {
     return `${hours}:${minutes} ${ampm}`;
 }
 
-// Aladhan API থেকে লাইভ নামাজ, সূর্যোদয়, সেহরি ও ইফতারের সময় আনার ফাংশন
+// Aladhan API থেকে লাইভ নামাজ, সূর্যোদয়, সেহরি ও ইফতারের সময় আনা
 async function loadPrayerTimes(city) {
     const container = document.getElementById('prayer-cards-container');
     const specialBar = document.getElementById('sehri-iftar-bar');
     const dateDisplay = document.getElementById('prayer-date-display');
 
+    if (!container) return;
     container.innerHTML = "<p style='text-align:center; color:#16a085; grid-column: 1 / -1;'>সময়সূচি আপডেট হচ্ছে...</p>";
 
     try {
-        // method=1 (University of Islamic Sciences, Karachi - বাংলাদেশ ও উপমহাদেশের জন্য প্রযোজ্য)
         const apiUrl = `https://aladhan.com{encodeURIComponent(city)}&country=Bangladesh&method=1`;
         const response = await fetch(apiUrl);
         const result = await response.json();
@@ -634,26 +640,27 @@ async function loadPrayerTimes(city) {
             const timings = result.data.timings;
             const dateInfo = result.data.date;
 
-            // ইংরেজি ও হিজরি তারিখ দেখানো
-            dateDisplay.innerText = `📅 ${dateInfo.readable} | 🌙 ${dateInfo.hijri.day} ${dateInfo.hijri.month.en}, ${dateInfo.hijri.year} হিজরি`;
+            if (dateDisplay) {
+                dateDisplay.innerText = `📅 ${dateInfo.readable} | 🌙 ${dateInfo.hijri.day} ${dateInfo.hijri.month.en}, ${dateInfo.hijri.year} হিজরি`;
+            }
 
-            // সেহরি (Imsak/Fajr), সূর্যোদয় (Sunrise) ও ইফতার (Maghrib) কার্ড
-            specialBar.innerHTML = `
-                <div class="special-time-card">
-                    <span>🌙 সেহরির শেষ সময়</span>
-                    <strong>${formatTime12Hour(timings.Imsak)}</strong>
-                </div>
-                <div class="special-time-card">
-                    <span>🌅 সূর্যোদয় (Sunrise)</span>
-                    <strong>${formatTime12Hour(timings.Sunrise)}</strong>
-                </div>
-                <div class="special-time-card">
-                    <span>🌇 ইফতারের সময়</span>
-                    <strong>${formatTime12Hour(timings.Maghrib)}</strong>
-                </div>
-            `;
+            if (specialBar) {
+                specialBar.innerHTML = `
+                    <div class="special-time-card">
+                        <span>🌙 সেহরির শেষ সময়</span>
+                        <strong>${formatTime12Hour(timings.Imsak)}</strong>
+                    </div>
+                    <div class="special-time-card">
+                        <span>🌅 সূর্যোদয় (Sunrise)</span>
+                        <strong>${formatTime12Hour(timings.Sunrise)}</strong>
+                    </div>
+                    <div class="special-time-card">
+                        <span>🌇 ইফতারের সময়</span>
+                        <strong>${formatTime12Hour(timings.Maghrib)}</strong>
+                    </div>
+                `;
+            }
 
-            // ৫ ওয়াক্ত নামাজের কার্ড
             const prayers = [
                 { name: "ফজর (Fajr)", time: timings.Fajr, icon: "🌌" },
                 { name: "যোহর (Dhuhr)", time: timings.Dhuhr, icon: "☀️" },
