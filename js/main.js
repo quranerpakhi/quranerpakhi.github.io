@@ -528,9 +528,12 @@ async function loadPrayerTimes(city) {
     container.innerHTML = "<p style='text-align:center; color:#16a085; grid-column: 1 / -1;'>সময়সূচি আপডেট হচ্ছে...</p>";
 
     try {
-        var domain = "://aladhan.com";
-        var apiUrl = "https://" + domain + "/v1/timingsByCity?city=" + encodeURIComponent(city) + "&country=Bangladesh&method=1";
-        var response = await fetch(apiUrl);
+        var apiUrl = new URL("/v1/timingsByCity", "https://" + "api." + "aladhan." + "com");
+        apiUrl.searchParams.set("city", city);
+        apiUrl.searchParams.set("country", "Bangladesh");
+        apiUrl.searchParams.set("method", "1");
+        var response = await fetch(apiUrl.toString());
+
         var result = await response.json();
 
         if (result && result.data) {
