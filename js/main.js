@@ -1,8 +1,8 @@
 // ১. ওয়েবসাইট লোড হওয়ার সাথে সাথে ডেটা আনবে, কিন্তু নোটগুলো শুরুতে লুকানো থাকবে
 document.addEventListener("DOMContentLoaded", function() {
     fetch('data/data.json')
-        .then(response => response.json())
-        .then(data => {
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
             window.allData = data;
             if (document.getElementById('whatsapp-btn')) {
                 document.getElementById('whatsapp-btn').href = data.live_classes.whatsapp_link;
@@ -11,12 +11,12 @@ document.addEventListener("DOMContentLoaded", function() {
                 document.getElementById('meet-btn').href = data.live_classes.google_meet_link;
             }
         })
-        .catch(err => console.log("JSON load error:", err));
+        .catch(function(err) { console.log("JSON load error:", err); });
 });
 
 // খোলা থাকা সব সেকশন একসাথে বন্ধ করার সহায়ক ফাংশন
 function closeAllSections(exceptId) {
-    const allSectionIds = [
+    var allSectionIds = [
         'donate-modal',
         'notes',
         'dictionary-section',
@@ -28,21 +28,21 @@ function closeAllSections(exceptId) {
         'prayer-section'
     ];
 
-    allSectionIds.forEach(id => {
+    allSectionIds.forEach(function(id) {
         if (id !== exceptId) {
-            const el = document.getElementById(id);
+            var el = document.getElementById(id);
             if (el) el.style.display = 'none';
         }
     });
 }
 
 // ২. রেগুলার বা এক্সট্রা নোট বাটনে ক্লিক করলে নোট দেখানোর ও বন্ধ করার ফাংশন
-let currentNoteType = "";
+var currentNoteType = "";
 
 function filterNotes(type) {
-    const notesSection = document.getElementById('notes');
-    const container = document.getElementById('notes-container');
-    const title = document.getElementById('section-title');
+    var notesSection = document.getElementById('notes');
+    var container = document.getElementById('notes-container');
+    var title = document.getElementById('section-title');
     if (!notesSection || !container || !window.allData) return;
 
     if (notesSection.style.display === 'block' && currentNoteType === type) {
@@ -56,7 +56,7 @@ function filterNotes(type) {
     notesSection.style.display = 'block';
     container.innerHTML = "";
     
-    let notes = [];
+    var notes = [];
     if (type === 'regular') {
         title.innerText = "রেগুলার ক্লাস নোটসমূহ";
         notes = window.allData.regular_notes;
@@ -65,13 +65,11 @@ function filterNotes(type) {
         notes = window.allData.extra_notes;
     }
     
-    notes.forEach(note => {
-        const card = document.createElement('div');
+    notes.forEach(function(note) {
+        var card = document.createElement('div');
         card.className = 'note-card';
-        card.innerHTML = `
-            <h3>${note.title}</h3>
-            <a href="${note.link}" target="_blank" class="view-btn">নোট দেখুন (PDF)</a>
-        `;
+        card.innerHTML = '<h3>' + note.title + '</h3>' +
+                         '<a href="' + note.link + '" target="_blank" class="view-btn">নোট দেখুন (PDF)</a>';
         container.appendChild(card);
     });
 
@@ -80,47 +78,50 @@ function filterNotes(type) {
 
 // ৩. ডিকশনারি বক্স খোলা এবং বন্ধ করার ফাংশন
 function toggleDictionary() {
-    closeAllSections('dictionary-section');
-    const dictSection = document.getElementById('dictionary-section');
-    if (dictSection.style.display === 'none' || dictSection.style.display === '') {
+    var dictSection = document.getElementById('dictionary-section');
+    if (!dictSection) return;
+    if (dictSection.style.display === 'block') {
+        dictSection.style.display = 'none';
+    } else {
+        closeAllSections('dictionary-section');
         dictSection.style.display = 'block';
         document.getElementById('arabic-input').focus();
-    } else {
-        dictSection.style.display = 'none';
     }
 }
 
 // কুরআন বক্স খোলা এবং বন্ধ করার ফাংশন
 function toggleQuran() {
-    closeAllSections('quran-section');
-    const quranSection = document.getElementById('quran-section');
-    if (quranSection.style.display === 'none' || quranSection.style.display === '') {
-        quranSection.style.display = 'block';
-    } else {
+    var quranSection = document.getElementById('quran-section');
+    if (!quranSection) return;
+    if (quranSection.style.display === 'block') {
         quranSection.style.display = 'none';
+    } else {
+        closeAllSections('quran-section');
+        quranSection.style.display = 'block';
     }
 }
 
 // দোআ ও যিকির বক্স খোলা এবং বন্ধ করার ফাংশন
 function toggleDua() {
-    closeAllSections('dua-section');
-    const duaSection = document.getElementById('dua-section');
-    if (duaSection.style.display === 'none' || duaSection.style.display === '') {
-        duaSection.style.display = 'block';
-    } else {
+    var duaSection = document.getElementById('dua-section');
+    if (!duaSection) return;
+    if (duaSection.style.display === 'block') {
         duaSection.style.display = 'none';
+    } else {
+        closeAllSections('dua-section');
+        duaSection.style.display = 'block';
     }
 }
 
-let typingTimer;
+var typingTimer;
 
 // ৪. টাইপ করার সাথে সাথে অটো কাজ করা এবং ক্লিয়ার বাটন দেখানোর ফাংশন
 function autoSearchArabic() {
     clearTimeout(typingTimer);
-    const inputField = document.getElementById('arabic-input');
-    const clearBtn = document.getElementById('clear-btn');
-    const word = inputField.value.trim();
-    const resultDiv = document.getElementById('dict-result');
+    var inputField = document.getElementById('arabic-input');
+    var clearBtn = document.getElementById('clear-btn');
+    var word = inputField.value.trim();
+    var resultDiv = document.getElementById('dict-result');
 
     if (clearBtn) {
         clearBtn.style.display = inputField.value.length > 0 ? "block" : "none";
@@ -133,16 +134,16 @@ function autoSearchArabic() {
 
     resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>অর্থ খোঁজা হচ্ছে...</span>";
 
-    typingTimer = setTimeout(() => {
+    typingTimer = setTimeout(function() {
         searchArabicWord();
     }, 500);
 }
 
 // ৫. ক্লিয়ার (X) বাটনে ক্লিক করলে বক্স ও ফলাফল মুছে ফেলার ফাংশন
 function clearArabicInput() {
-    const inputField = document.getElementById('arabic-input');
-    const clearBtn = document.getElementById('clear-btn');
-    const resultDiv = document.getElementById('dict-result');
+    var inputField = document.getElementById('arabic-input');
+    var clearBtn = document.getElementById('clear-btn');
+    var resultDiv = document.getElementById('dict-result');
 
     inputField.value = "";
     resultDiv.innerHTML = "";
@@ -151,7 +152,7 @@ function clearArabicInput() {
 }
 
 // ৬. নিজস্ব বিশেষ শব্দের তালিকা
-const customDictionary = {
+var customDictionary = {
     "تَلْقَفُ": { bn: "গিলে ফেলা / লুফে নেওয়া", en: "swallows / devours", pos: "ক্রিয়া (Verb)" },
     "تَلۡقَفُ": { bn: "গিলে ফেলা / লুফে নেওয়া", en: "swallows / devours", pos: "ক্রিয়া (Verb)" },
     "تلقف": { bn: "গিলে ফেলা / লুফে নেওয়া", en: "swallows / devours", pos: "ক্রিয়া (Verb)" },
@@ -165,75 +166,71 @@ const customDictionary = {
 
 // ৭. আরবী থেকে নির্ভুল বাংলা ও ইংরেজি অর্থ বের করার মূল ফাংশন
 async function searchArabicWord() {
-    const rawWord = document.getElementById('arabic-input').value.trim();
-    const resultDiv = document.getElementById('dict-result');
+    var rawWord = document.getElementById('arabic-input').value.trim();
+    var resultDiv = document.getElementById('dict-result');
     if (!rawWord) return;
 
     if (customDictionary.hasOwnProperty(rawWord)) {
-        const item = customDictionary[rawWord];
-        resultDiv.innerHTML = `
-            বাংলা অর্থ: <span style="color:#d35400; font-size:22px;">${item.bn}</span>
-            <div style="font-size:17px; color:#1e8449; margin-top:6px;">
-                ইংরেজি অর্থ: <strong>${item.en}</strong>
-            </div>
-            <div style="font-size:14px; color:#555; margin-top:5px;">
-                পদ প্রকরণ: <strong>${item.pos}</strong>
-            </div>
-        `;
+        var item = customDictionary[rawWord];
+        resultDiv.innerHTML = 'বাংলা অর্থ: <span style="color:#d35400; font-size:22px;">' + item.bn + '</span>' +
+            '<div style="font-size:17px; color:#1e8449; margin-top:6px;">ইংরেজি অর্থ: <strong>' + item.en + '</strong></div>' +
+            '<div style="font-size:14px; color:#555; margin-top:5px;">পদ প্রকরণ: <strong>' + item.pos + '</strong></div>';
         return;
     }
 
     resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>সঠিক অর্থ খোঁজা হচ্ছে...</span>";
 
-    const normalizedWord = rawWord
+    var normalizedWord = rawWord
         .replace(/\u06E1/g, "\u0652")
         .replace(/[\u06D6-\u06E0\u06E2-\u06ED]/g, "");
 
-    const stripAll = (str) => str
-        .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "")
-        .replace(/[أإآٱ]/g, "ا")
-        .replace(/ى/g, "ي")
-        .replace(/ة/g, "ه");
+    var stripAll = function(str) {
+        return str
+            .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "")
+            .replace(/[أإآٱ]/g, "ا")
+            .replace(/ى/g, "ي")
+            .replace(/ة/g, "ه");
+    };
 
-    const cleanRoot = stripAll(normalizedWord);
-    let wordBn = "";
-    let wordEn = "";
+    var cleanRoot = stripAll(normalizedWord);
+    var wordBn = "";
+    var wordEn = "";
 
     try {
-        const alQuranBase = ["https:/", "api.alquran.cloud", "v1"].join("/");
-        const searchUrl = `${alQuranBase}/search/${encodeURIComponent(cleanRoot)}/all/quran-simple-clean`;
-        const searchRes = await fetch(searchUrl);
-        const searchData = await searchRes.json();
+        var alQuranBase = "https://alquran.cloud";
+        var searchUrl = alQuranBase + "/search/" + encodeURIComponent(cleanRoot) + "/all/quran-simple-clean";
+        var searchRes = await fetch(searchUrl);
+        var searchData = await searchRes.json();
 
         if (searchData && searchData.data && Array.isArray(searchData.data.matches) && searchData.data.matches.length > 0) {
-            const firstMatch = searchData.data.matches.at(0);
-            const surahNum = firstMatch.surah.number;
-            const ayahNum = firstMatch.numberInSurah;
+            var firstMatch = searchData.data.matches[0];
+            var surahNum = firstMatch.surah.number;
+            var ayahNum = firstMatch.numberInSurah;
 
-            const proxy = "https://corsproxy.io?";
-            const quranBase = ["https:/", "://quran.com", "api", "v4", "verses", "by_key"].join("/");
+            var proxy = "https://corsproxy.io?";
+            var quranBase = "https://quran.com";
             
-            const bnTarget = encodeURIComponent(`${quranBase}/${surahNum}:${ayahNum}?language=bn&words=true&word_fields=text_imlaei_simple`);
-            const enTarget = encodeURIComponent(`${quranBase}/${surahNum}:${ayahNum}?language=en&words=true&word_fields=text_imlaei_simple`);
+            var bnTarget = encodeURIComponent(quranBase + "/" + surahNum + ":" + ayahNum + "?language=bn&words=true&word_fields=text_imlaei_simple");
+            var enTarget = encodeURIComponent(quranBase + "/" + surahNum + ":" + ayahNum + "?language=en&words=true&word_fields=text_imlaei_simple");
 
-            const [bnRes, enRes] = await Promise.all([
-                fetch(`${proxy}${bnTarget}`),
-                fetch(`${proxy}${enTarget}`)
+            var responses = await Promise.all([
+                fetch(proxy + bnTarget),
+                fetch(proxy + enTarget)
             ]);
 
-            if (bnRes.ok && enRes.ok) {
-                const bnData = await bnRes.json();
-                const enData = await enRes.json();
+            if (responses[0].ok && responses[1].ok) {
+                var bnData = await responses[0].json();
+                var enData = await responses[1].json();
 
                 if (bnData && bnData.verse && Array.isArray(bnData.verse.words)) {
-                    for (let i = 0; i < bnData.verse.words.length; i++) {
-                        const w = bnData.verse.words.at(i);
+                    for (var i = 0; i < bnData.verse.words.length; i++) {
+                        var w = bnData.verse.words[i];
                         if (w.char_type_name !== "word") continue;
 
                         if (stripAll(w.text_imlaei_simple || "") === cleanRoot) {
                             wordBn = (w.translation && w.translation.text) ? w.translation.text : "";
                             if (enData && enData.verse && Array.isArray(enData.verse.words)) {
-                                const wEn = enData.verse.words.at(i);
+                                var wEn = enData.verse.words[i];
                                 wordEn = (wEn && wEn.translation && wEn.translation.text) ? wEn.translation.text : "";
                             }
                             break;
@@ -247,27 +244,28 @@ async function searchArabicWord() {
     }
 
     if (wordBn && wordBn !== rawWord) {
-        let outputHTML = `বাংলা অর্থ: <span style="color:#d35400; font-size:22px;">${wordBn}</span>`;
+        var qOut = 'বাংলা অর্থ: <span style="color:#d35400; font-size:22px;">' + wordBn + '</span>';
         if (wordEn) {
-            outputHTML += `<div style="font-size:17px; color:#1e8449; margin-top:6px;">ইংরেজি অর্থ: <strong>${wordEn}</strong></div>`;
+            qOut += '<div style="font-size:17px; color:#1e8449; margin-top:6px;">ইংরেজি অর্থ: <strong>' + wordEn + '</strong></div>';
         }
-        resultDiv.innerHTML = outputHTML;
+        resultDiv.innerHTML = qOut;
         return;
     }
 
-    try {const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
-const isDefinitelyNoun = /[\u064B\u064C\u064D]/.test(normalizedWord) || normalizedWord.startsWith("ال");
-const checkUrl = ${baseGoogle}?client=gtx&sl=ar&tl=en&dt=t&dt=bd&q=${encodeURIComponent(normalizedWord)};
-const checkRes = await fetch(checkUrl);
-const checkData = await checkRes.json();
-let posTag = "";
-let isVerb = false;
+    try {
+        var baseGoogle = "https://googleapis.com";
+var isDefinitelyNoun = /[\u064B\u064C\u064D]/.test(normalizedWord) || normalizedWord.indexOf("ال") === 0;
+var checkUrl = baseGoogle + "?client=gtx&sl=ar&tl=en&dt=t&dt=bd&q=" + encodeURIComponent(normalizedWord);
+var checkRes = await fetch(checkUrl);
+var checkData = await checkRes.json();
+var posTag = "";
+var isVerb = false;
 if (isDefinitelyNoun) {
 posTag = "বিশেষ্য (Noun)";
-} else if (Array.isArray(checkData) && Array.isArray(checkData.at(1))) {
-const firstCat = checkData.at(1).at(0);
+} else if (Array.isArray(checkData) && Array.isArray(checkData[1])) {
+var firstCat = checkData[1][0];
 if (Array.isArray(firstCat)) {
-const rawPos = firstCat.at(0);
+var rawPos = firstCat[0];
 if (rawPos === "verb") {
 isVerb = true;
 posTag = "ক্রিয়া (Verb)";
@@ -278,53 +276,54 @@ posTag = rawPos;
 }
 }
 }
-let queryWord = normalizedWord;
-if (!normalizedWord.includes(" ")) {
+var queryWord = normalizedWord;
+if (normalizedWord.indexOf(" ") === -1) {
 if (isVerb) {
-queryWord = هو ${normalizedWord};
+queryWord = "هو " + normalizedWord;
 } else if (isDefinitelyNoun) {
-queryWord = بعض ${normalizedWord};
+queryWord = "بعض " + normalizedWord;
 }
 }
-const enUrl = ${baseGoogle}?client=gtx&sl=ar&tl=en&dt=t&q=${encodeURIComponent(queryWord)};
-const enRes = await fetch(enUrl);
-const enData = await enRes.json();
-let englishMeaning = "";
-if (Array.isArray(enData) && Array.isArray(enData.at(0))) {
-enData.at(0).forEach(item => {
-if (Array.isArray(item) && typeof item.at(0) === "string") {
-englishMeaning += item.at(0);
+var enUrl = baseGoogle + "?client=gtx&sl=ar&tl=en&dt=t&q=" + encodeURIComponent(queryWord);
+var enRes = await fetch(enUrl);
+var enData = await enRes.json();
+var englishMeaning = "";
+if (Array.isArray(enData) && Array.isArray(enData[0])) {
+enData[0].forEach(function(item) {
+if (Array.isArray(item) && typeof item[0] === "string") {
+englishMeaning += item[0];
 }
 });
 }
 if (isDefinitelyNoun && englishMeaning) {
 englishMeaning = englishMeaning.replace(/^some\s+/gi, "").trim();
 }
-let englishForBangla = englishMeaning;
-const isEnglishPlural = isDefinitelyNoun && englishMeaning.toLowerCase().endsWith("s") && !englishMeaning.toLowerCase().endsWith("ss");
+var englishForBangla = englishMeaning;
+var lowerEn = englishMeaning.toLowerCase();
+var isEnglishPlural = isDefinitelyNoun && lowerEn.slice(-1) === "s" && lowerEn.slice(-2) !== "ss";
 if (isEnglishPlural) {
-englishForBangla = many ${englishMeaning};
+englishForBangla = "many " + englishMeaning;
 }
-let finalBangla = "";
+var finalBangla = "";
 if (englishForBangla && englishForBangla.toLowerCase() !== normalizedWord.toLowerCase()) {
-const bnUrl = ${baseGoogle}?client=gtx&sl=en&tl=bn&dt=t&q=${encodeURIComponent(englishForBangla)};
-const bnRes = await fetch(bnUrl);
-const bnData = await bnRes.json();
-if (Array.isArray(bnData) && Array.isArray(bnData.at(0))) {
-bnData.at(0).forEach(item => {
-if (Array.isArray(item) && typeof item.at(0) === "string") {
-finalBangla += item.at(0);
+var bnUrl = baseGoogle + "?client=gtx&sl=en&tl=bn&dt=t&q=" + encodeURIComponent(englishForBangla);
+var bnRes = await fetch(bnUrl);
+var bnData = await bnRes.json();
+if (Array.isArray(bnData) && Array.isArray(bnData[0])) {
+bnData[0].forEach(function(item) {
+if (Array.isArray(item) && typeof item[0] === "string") {
+finalBangla += item[0];
 }
 });
 }
 }
 if (finalBangla) {
-let outputHTML = বাংলা অর্থ: <span style="color:#d35400; font-size:22px;">${finalBangla}</span>;
+var outputHTML = 'বাংলা অর্থ: ' + finalBangla + '';
 if (englishMeaning) {
-outputHTML += <div style="font-size:17px; color:#1e8449; margin-top:6px;">ইংরেজি অর্থ: <strong>${englishMeaning}</strong></div>;
+outputHTML += 'ইংরেজি অর্থ: ' + englishMeaning + '';
 }
 if (posTag) {
-outputHTML += <div style="font-size:14px; color:#555; margin-top:5px;">পদ প্রকরণ: <strong>${posTag}</strong></div>;
+outputHTML += 'পদ প্রকরণ: ' + posTag + '';
 }
 resultDiv.innerHTML = outputHTML;
 return;
@@ -337,25 +336,26 @@ resultDiv.innerHTML = "অর্থ খুঁজে পাওয়া যায়ন
 }
 // Contact সেকশন খোলা এবং বন্ধ করার ফাংশন
 function toggleContact() {
+var contactSection = document.getElementById('contact-section');
+if (!contactSection) return;
+if (contactSection.style.display === 'block') {
+contactSection.style.display = 'none';
+} else {
 closeAllSections('contact-section');
-const contactSection = document.getElementById('contact-section');
-if (contactSection.style.display === 'none' || contactSection.style.display === '') {
 contactSection.style.display = 'block';
 contactSection.scrollIntoView({ behavior: 'smooth' });
-} else {
-contactSection.style.display = 'none';
 }
 }
 // ইমেইলে ক্লিক করলে ঠিকানা কপি করার ফাংশন
 function copyEmail(event) {
-const email = "quranerpakhi@protonmail.com";
-navigator.clipboard.writeText(email).then(() => {
-const btn = document.getElementById('email-copy-btn');
-const originalText = btn.innerText;
+var email = "quranerpakhi@protonmail.com";
+navigator.clipboard.writeText(email).then(function() {
+var btn = document.getElementById('email-copy-btn');
+var originalText = btn.innerText;
 btn.innerText = "✓ ইমেইল কপি হয়েছে!";
 btn.style.backgroundColor = "#27ae60";
 btn.style.color = "#ffffff";
-setTimeout(() => {
+setTimeout(function() {
 btn.innerText = originalText;
 btn.style.backgroundColor = "";
 btn.style.color = "";
@@ -364,27 +364,28 @@ btn.style.color = "";
 }
 // প্রশ্ন ও উত্তর সেকশন খোলা এবং গুগল শিট থেকে উত্তরসহ প্রশ্ন লোড করা
 function toggleQA() {
+var qaSection = document.getElementById('qa-section');
+if (!qaSection) return;
+if (qaSection.style.display === 'block') {
+qaSection.style.display = 'none';
+} else {
 closeAllSections('qa-section');
-const qaSection = document.getElementById('qa-section');
-if (qaSection.style.display === 'none' || qaSection.style.display === '') {
 qaSection.style.display = 'block';
 loadQAFromSheet();
-} else {
-qaSection.style.display = 'none';
 }
 }
 async function loadQAFromSheet() {
-const container = document.getElementById('qa-list-container');
-const sheetCsvUrl = "google.com";
+var container = document.getElementById('qa-list-container');
+var sheetCsvUrl = "google.com";
 try {
-const response = await fetch(sheetCsvUrl);
-const csvText = await response.text();
+var response = await fetch(sheetCsvUrl);
+var csvText = await response.text();
 function parseCSVLine(text) {
-const result = [];
-let current = "";
-let inQuotes = false;
-for (let i = 0; i < text.length; i++) {
-const char = text.charAt(i);
+var result = [];
+var current = "";
+var inQuotes = false;
+for (var i = 0; i < text.length; i++) {
+var char = text.charAt(i);
 if (char === '"') {
 inQuotes = !inQuotes;
 } else if (char === ',' && !inQuotes) {
@@ -397,18 +398,22 @@ current += char;
 result.push(current.trim());
 return result;
 }
-const rows = csvText.split(/\r?\n/).slice(1);
-let htmlContent = "";
-let count = 0;
-rows.reverse().forEach(row => {
+var rows = csvText.split(/\r?\n/).slice(1);
+var htmlContent = "";
+var count = 0;
+rows.reverse().forEach(function(row) {
 if (!row.trim()) return;
-const cols = parseCSVLine(row);
-const studentName = cols.at(1) || "শিক্ষার্থী";
-const question = cols.at(2) || "";
-const answer = cols.at(3) || "";
+var cols = parseCSVLine(row);
+var studentName = cols[1] || "শিক্ষার্থী";
+var question = cols[2] || "";
+var answer = cols[3] || "";
 if (question && answer) {
 count++;
-htmlContent += <div class="qa-card"> <div class="qa-question">প্রশ্ন: ${question}</div> <div class="qa-meta">প্রশ্নকারী: ${studentName}</div> <div class="qa-answer"><strong>উত্তর:</strong> ${answer}</div> </div>;
+htmlContent += '' +
+'প্রশ্ন: ' + question + '' +
+'প্রশ্নকারী: ' + studentName + '' +
+'উত্তর: ' + answer + '' +
+'';
 }
 });
 if (count > 0) {
@@ -422,18 +427,19 @@ container.innerHTML = "প্রশ্নোত্তর লোড করতে 
 }
 // About Us সেকশন খোলা এবং বন্ধ করার ফাংশন
 function toggleAbout() {
+var aboutSection = document.getElementById('about-section');
+if (!aboutSection) return;
+if (aboutSection.style.display === 'block') {
+aboutSection.style.display = 'none';
+} else {
 closeAllSections('about-section');
-const aboutSection = document.getElementById('about-section');
-if (aboutSection.style.display === 'none' || aboutSection.style.display === '') {
 aboutSection.style.display = 'block';
 aboutSection.scrollIntoView({ behavior: 'smooth' });
-} else {
-aboutSection.style.display = 'none';
 }
 }
 // Donate বাটনে ক্লিক করলে খুলবে, আবার ক্লিক করলে বন্ধ হবে
 function openDonateModal() {
-const modal = document.getElementById('donate-modal');
+var modal = document.getElementById('donate-modal');
 if (!modal) return;
 if (modal.style.display === 'block') {
 modal.style.display = 'none';
@@ -444,17 +450,17 @@ modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 }
 function closeDonateModal() {
-const modal = document.getElementById('donate-modal');
+var modal = document.getElementById('donate-modal');
 if (modal) modal.style.display = 'none';
 }
 // Payment Method ট্যাব পরিবর্তন করার ফাংশন
 function switchPaymentTab(method) {
-const bkashTab = document.getElementById('tab-bkash');
-const bankTab = document.getElementById('tab-bank');
-const bkashCheck = document.getElementById('check-bkash');
-const bankCheck = document.getElementById('check-bank');
-const bkashContent = document.getElementById('content-bkash');
-const bankContent = document.getElementById('content-bank');
+var bkashTab = document.getElementById('tab-bkash');
+var bankTab = document.getElementById('tab-bank');
+var bkashCheck = document.getElementById('check-bkash');
+var bankCheck = document.getElementById('check-bank');
+var bkashContent = document.getElementById('content-bkash');
+var bankContent = document.getElementById('content-bank');
 if (method === 'bkash') {
 bkashTab.classList.add('active');
 bankTab.classList.remove('active');
@@ -473,13 +479,13 @@ bkashContent.style.display = 'none';
 }
 // নম্বর বা অ্যাকাউন্ট কপি করার ফাংশন
 function copyText(elementId, btnElement) {
-const textToCopy = document.getElementById(elementId).innerText.trim();
-navigator.clipboard.writeText(textToCopy).then(() => {
-const originalText = btnElement.innerText;
+var textToCopy = document.getElementById(elementId).innerText.trim();
+navigator.clipboard.writeText(textToCopy).then(function() {
+var originalText = btnElement.innerText;
 btnElement.innerText = "✓ কপি হয়েছে";
 btnElement.style.backgroundColor = "#27ae60";
 btnElement.style.color = "#ffffff";
-setTimeout(() => {
+setTimeout(function() {
 btnElement.innerText = originalText;
 btnElement.style.backgroundColor = "";
 btnElement.style.color = "";
@@ -488,15 +494,15 @@ btnElement.style.color = "";
 }
 // নামাজের সময়সূচি সেকশন খোলা ও বন্ধ করার ফাংশন
 function togglePrayerTimes() {
-const prayerSection = document.getElementById('prayer-section');
+var prayerSection = document.getElementById('prayer-section');
 if (!prayerSection) return;
 if (prayerSection.style.display === 'block') {
 prayerSection.style.display = 'none';
 } else {
 closeAllSections('prayer-section');
 prayerSection.style.display = 'block';
-const citySelect = document.getElementById('city-select');
-const selectedCity = citySelect ? citySelect.value : 'Dhaka';
+var citySelect = document.getElementById('city-select');
+var selectedCity = citySelect ? citySelect.value : 'Dhaka';
 loadPrayerTimes(selectedCity);
 prayerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -504,44 +510,60 @@ prayerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 // ২৪ ঘণ্টার সময়কে ১২ ঘণ্টার (AM/PM) ফরম্যাটে রূপান্তর
 function formatTime12Hour(time24) {
 if (!time24) return "";
-const cleanTime = time24.split(" ").at(0);
-let [hours, minutes] = cleanTime.split(":");
-hours = parseInt(hours, 10);
-const ampm = hours >= 12 ? "PM" : "AM";
+var cleanTime = time24.split(" ")[0];
+var parts = cleanTime.split(":");
+var hours = parseInt(parts[0], 10);
+var minutes = parts[1];
+var ampm = hours >= 12 ? "PM" : "AM";
 hours = hours % 12 || 12;
-return ${hours}:${minutes} ${ampm};
+return hours + ":" + minutes + " " + ampm;
 }
 // Aladhan API থেকে লাইভ নামাজ, সূর্যোদয়, সেহরি ও ইফতারের সময় আনা
 async function loadPrayerTimes(city) {
-const container = document.getElementById('prayer-cards-container');
-const specialBar = document.getElementById('sehri-iftar-bar');
-const dateDisplay = document.getElementById('prayer-date-display');
+var container = document.getElementById('prayer-cards-container');
+var specialBar = document.getElementById('sehri-iftar-bar');
+var dateDisplay = document.getElementById('prayer-date-display');
 if (!container) return;
 container.innerHTML = "সময়সূচি আপডেট হচ্ছে...";
 try {
-const baseAladhan = ["https:/", "aladhan.com", "v1", "timingsByCity"].join("/");
-const apiUrl = ${baseAladhan}?city=${encodeURIComponent(city)}&country=Bangladesh&method=1;
-const response = await fetch(apiUrl);
-const result = await response.json();
+var apiUrl = "aladhan.com" + encodeURIComponent(city) + "&country=Bangladesh&method=1";
+var response = await fetch(apiUrl);
+var result = await response.json();
 if (result && result.data) {
-const timings = result.data.timings;
-const dateInfo = result.data.date;
+var timings = result.data.timings;
+var dateInfo = result.data.date;
 if (dateDisplay) {
-dateDisplay.innerText = 📅 ${dateInfo.readable} | 🌙 ${dateInfo.hijri.day} ${dateInfo.hijri.month.en}, ${dateInfo.hijri.year} হিজরি;
+dateDisplay.innerText = "📅 " + dateInfo.readable + " | 🌙 " + dateInfo.hijri.day + " " + dateInfo.hijri.month.en + ", " + dateInfo.hijri.year + " হিজরি";
 }
 if (specialBar) {
-specialBar.innerHTML = <div class="special-time-card"> <span>🌙 সেহরির শেষ সময়</span> <strong>${formatTime12Hour(timings.Imsak)}</strong> </div> <div class="special-time-card"> <span>🌅 সূর্যোদয় (Sunrise)</span> <strong>${formatTime12Hour(timings.Sunrise)}</strong> </div> <div class="special-time-card"> <span>🌇 ইফতারের সময়</span> <strong>${formatTime12Hour(timings.Maghrib)}</strong> </div>;
+specialBar.innerHTML =
+'' +
+'🌙 সেহরির শেষ সময়' +
+'' + formatTime12Hour(timings.Imsak) + '' +
+'' +
+'' +
+'🌅 সূর্যোদয় (Sunrise)' +
+'' + formatTime12Hour(timings.Sunrise) + '' +
+'' +
+'' +
+'🌇 ইফতারের সময়' +
+'' + formatTime12Hour(timings.Maghrib) + '' +
+'';
 }
-const prayers = [
+var prayers = [
 { name: "ফজর (Fajr)", time: timings.Fajr, icon: "🌌" },
 { name: "যোহর (Dhuhr)", time: timings.Dhuhr, icon: "☀️" },
 { name: "আসর (Asr)", time: timings.Asr, icon: "🌤️" },
 { name: "মাগরিব (Maghrib)", time: timings.Maghrib, icon: "🌇" },
 { name: "ইশা (Isha)", time: timings.Isha, icon: "🌃" }
 ];
-let cardsHtml = "";
-prayers.forEach(p => {
-cardsHtml += <div class="prayer-card"> <div class="prayer-icon">${p.icon}</div> <div class="prayer-name">${p.name}</div> <div class="prayer-time">${formatTime12Hour(p.time)}</div> </div>;
+var cardsHtml = "";
+prayers.forEach(function(p) {
+cardsHtml += '' +
+'' + p.icon + '' +
+'' + p.name + '' +
+'' + formatTime12Hour(p.time) + '' +
+'';
 });
 container.innerHTML = cardsHtml;
 }
