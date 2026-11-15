@@ -526,7 +526,7 @@ var dateDisplay = document.getElementById('prayer-date-display');
 if (!container) return;
 container.innerHTML = "সময়সূচি আপডেট হচ্ছে...";
 try {
-var apiUrl = "aladhan.com" + encodeURIComponent(city) + "&country=Bangladesh&method=1";
+var apiUrl = ["https:/", "://aladhan.com", "v1", "timingsByCity"].join("/") + "?city=" + encodeURIComponent(city) + "&country=Bangladesh&method=1";
 var response = await fetch(apiUrl);
 var result = await response.json();
 if (result && result.data) {
