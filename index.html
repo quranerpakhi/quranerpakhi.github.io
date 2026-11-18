@@ -57,12 +57,14 @@
         <!-- আরবী টু বাংলা ডিকশনারি সেকশন -->
     <section id="dictionary-section" class="dictionary-container" style="display: none;">
         <div class="dict-box">
-            <h2>📖 আরবী থেকে বাংলা অভিধান</h2>
-            <p>যেকোনো আরবী শব্দ লিখুন এবং সাথে সাথে বাংলা অর্থ জানুন</p>
-        <div class="search-bar" style="position: relative;">
-    <input type="text" id="arabic-input" oninput="autoSearchArabic()" placeholder="এখানে আরবী শব্দ লিখুন (যেমন: كتاب, مدرسة)..." dir="rtl" style="padding-left: 40px;">
-    <span id="clear-btn" onclick="clearArabicInput()" style="display: none; position: absolute; left: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 20px; color: #888; font-weight: bold;" title="মুছে ফেলুন">×</span>
+                   <h2>📖 আরবী ⇄ বাংলা অভিধান</h2>
+        <p>যেকোনো আরবী বা বাংলা শব্দ লিখুন এবং সাথে সাথে অর্থ জানুন</p>
+        
+        <div class="search-box" style="position: relative; max-width: 550px; margin: 0 auto;">
+            <input type="text" id="arabic-input" oninput="autoSearchArabic()" placeholder="আরবী বা বাংলা শব্দ লিখুন (যেমন: كتاب অথবা বই)..." style="width: 100%; padding: 14px 40px 14px 18px; font-size: 18px; border-radius: 10px; border: 2px solid #ddd; outline: none; box-sizing: border-box;">
+            <span id="clear-btn" onclick="clearArabicInput()" style="display: none; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 20px; color: #888; cursor: pointer;">&times;</span>
         </div>
+
 
             <div id="dict-result" class="dict-result"></div>
         </div>
