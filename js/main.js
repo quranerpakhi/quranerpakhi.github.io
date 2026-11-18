@@ -430,23 +430,20 @@ finalBangla += item.at(0);
 });
 }
 }
-if (finalBangla) {
-var outputHTML = 'বাংলা অর্থ: ' + finalBangla + '';
-if (englishMeaning) {
-outputHTML += 'ইংরেজি অর্থ: ' + englishMeaning + '';
-}
-if (posTag) {
-outputHTML += 'পদ প্রকরণ: ' + posTag + '';
-}
-resultDiv.innerHTML = outputHTML;
-return;
-} else {
-resultDiv.innerHTML = "অর্থ খুঁজে পাওয়া যায়নি, আবার চেষ্টা করুন।";
-}
-} catch (e) {
-resultDiv.innerHTML = "অর্থ খুঁজে পাওয়া যায়নি, আবার চেষ্টা করুন।";
-}
-}
+        if (finalBangla) {
+            var outputHTML = '<div style="display: block; margin-bottom: 6px;">বাংলা অর্থ: <span style="color:#d35400; font-size:26px; font-weight:bold;">' + finalBangla + '</span></div>';
+            if (englishMeaning) {
+                outputHTML += '<div style="display: block; font-size:17px; color:#1e8449; margin-bottom: 5px;">ইংরেজি অর্থ: <strong>' + englishMeaning + '</strong></div>';
+            }
+            if (posTag) {
+                outputHTML += '<div style="display: block; font-size:15px; color:#555555;">পদ প্রকরণ: <strong>' + posTag + '</strong></div>';
+            }
+            resultDiv.innerHTML = outputHTML;
+            return;
+        } else {
+            resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি, আবার চেষ্টা করুন।</span>";
+        }
+
 
 // Contact সেকশন খোলা এবং বন্ধ করার ফাংশন
 function toggleContact() {
