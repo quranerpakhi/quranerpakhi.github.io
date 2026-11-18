@@ -793,3 +793,190 @@ header.site-header {
         grid-template-columns: repeat(2, 1fr);
     }
 }
+/* স্টপওয়াচ বাটনের বর্ডার কালার */
+.opt-btn.stopwatch { border-left: 5px solid #e67e22; }
+
+/* কালো থিম স্টপওয়াচ বক্স (দ্বিতীয় ছবির আদলে) */
+.sw-black-box {
+    background-color: #000000;
+    color: #e0e0e0;
+    max-width: 650px;
+    margin: 0 auto;
+    padding: 25px 20px;
+    border-radius: 20px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
+    border: 1px solid #222222;
+    font-family: 'Segoe UI', Roboto, monospace, sans-serif;
+}
+
+.sw-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.sw-mode-tabs {
+    display: flex;
+    gap: 10px;
+}
+
+.sw-mode-btn {
+    background: #1a1a1a;
+    color: #aaaaaa;
+    border: 1px solid #333333;
+    padding: 7px 16px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sw-mode-btn.active {
+    background: #ffffff;
+    color: #000000;
+    border-color: #ffffff;
+}
+
+.sw-close-btn {
+    background: transparent;
+    border: none;
+    color: #888888;
+    font-size: 28px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.sw-close-btn:hover {
+    color: #ffffff;
+}
+
+/* বড় ডিজিট ডিসপ্লে */
+.sw-display-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 15px 0;
+}
+
+.sw-big-digits {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 110px;
+    font-weight: 800;
+    color: #cccccc;
+    line-height: 1;
+    letter-spacing: -2px;
+}
+
+.sw-colon {
+    color: #666666;
+    font-size: 80px;
+}
+
+.sw-ms-text {
+    font-size: 36px;
+    font-weight: 700;
+    color: #999999;
+    margin-top: 8px;
+}
+
+/* টাইমার ইনপুট বক্স */
+.timer-inputs {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.timer-inputs input {
+    width: 105px;
+    padding: 8px 12px;
+    border-radius: 50px;
+    border: 2px solid #555555;
+    background: #111111;
+    color: #ffffff;
+    font-size: 15px;
+    text-align: center;
+    outline: none;
+}
+
+.timer-inputs input:focus {
+    border-color: #ffffff;
+}
+
+/* নিচের ক্যাপসুল বাটনগুলো (ছবির মতো সাদা বর্ডার ও কালো ব্যাকগ্রাউন্ড) */
+.sw-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.sw-pill-btn {
+    background-color: #000000;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+    padding: 10px 28px;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sw-pill-btn:hover {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+.sw-pill-btn.primary {
+    border-color: #2ecc71;
+    color: #2ecc71;
+}
+
+.sw-pill-btn.primary:hover {
+    background-color: #2ecc71;
+    color: #000000;
+}
+
+/* ল্যাপ তালিকা */
+.sw-laps-container {
+    margin-top: 20px;
+    max-height: 160px;
+    overflow-y: auto;
+    text-align: left;
+    border-top: 1px solid #222222;
+}
+
+.sw-lap-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 15px;
+    border-bottom: 1px solid #1a1a1a;
+    font-size: 14px;
+    color: #bbbbbb;
+}
+
+/* মোবাইলে দ্বিতীয় ছবির মতো উপর-নিচে বড় ডিজিট দেখানোর জন্য */
+@media (max-width: 600px) {
+    .sw-big-digits {
+        flex-direction: column;
+        font-size: 125px;
+        gap: 0;
+    }
+    .sw-colon {
+        display: none;
+    }
+    .sw-pill-btn {
+        padding: 9px 20px;
+        font-size: 15px;
+    }
+}
