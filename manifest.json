@@ -1,20 +1,19 @@
 {
   "name": "কুরআনের পাখি - আরবী ভাষা শিক্ষা",
   "short_name": "কুরআনের পাখি",
-  "start_url": "/index.html",
+  "description": "সহজ ও আধুনিক পদ্ধতিতে কুরআনের ভাষা আরবী শেখার অনলাইন প্ল্যাটফর্ম",
+  "start_url": "https://github.io",
+  "scope": "https://github.io",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#008080",
   "icons": [
     {
-      "src": "images/app-icon.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "images/app-icon.png",
+      "src": "https://github.ioimages/logo1.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
