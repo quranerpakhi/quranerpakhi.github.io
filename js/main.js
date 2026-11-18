@@ -25,7 +25,8 @@ function closeAllSections(exceptId) {
         'qa-section',
         'about-section',
         'contact-section',
-        'prayer-section'
+        'prayer-section',
+        'stopwatch-section'
     ];
 
     allSectionIds.forEach(function(id) {
