@@ -49,6 +49,8 @@
             <a href="#dua-section" onclick="toggleDua()" class="opt-btn dua">দোআ ও যিকির (Hisnul Muslim)</a>
             <a href="#qa-section" onclick="toggleQA()" class="opt-btn qa">প্রশ্ন ও উত্তর (Q&A)</a>
             <a href="#prayer-section" onclick="togglePrayerTimes()" class="opt-btn prayer">নামাজের সময়সূচি (Prayer Times)</a>
+            <a href="#stopwatch-section" onclick="toggleStopwatch()" class="opt-btn stopwatch">স্টপওয়াচ ও টাইমার (Stopwatch)</a>
+
 
         </div>
     </section>
@@ -134,6 +136,47 @@
             <div id="prayer-cards-container" class="prayer-grid">
                 <p style="text-align: center; color: #666; grid-column: 1 / -1;">সময়সূচি লোড হচ্ছে...</p>
             </div>
+        </div>
+    </section>
+    <!-- স্টপওয়াচ ও টাইমার (Stopwatch & Timer) সেকশন -->
+    <section id="stopwatch-section" class="dictionary-container" style="display: none;">
+        <div class="sw-black-box">
+            <!-- ওপরের মোড পরিবর্তন বাটন (Stopwatch ও Timer) -->
+            <div class="sw-top-bar">
+                <div class="sw-mode-tabs">
+                    <button id="sw-tab-stopwatch" class="sw-mode-btn active" onclick="switchSwMode('stopwatch')">⏱️ স্টপওয়াচ (Stopwatch)</button>
+                    <button id="sw-tab-timer" class="sw-mode-btn" onclick="switchSwMode('timer')">⏳ টাইমার (Timer)</button>
+                </div>
+                <button onclick="toggleStopwatch()" class="sw-close-btn" title="বন্ধ করুন">&times;</button>
+            </div>
+
+            <!-- বড় ডিজিট ডিসপ্লে (দ্বিতীয় ছবির মতো বড় ফন্ট ও মিলিসেকেন্ডসহ) -->
+            <div class="sw-display-area">
+                <div class="sw-big-digits">
+                    <span id="sw-min" class="sw-digit-block">00</span>
+                    <span class="sw-colon">:</span>
+                    <span id="sw-sec" class="sw-digit-block">00</span>
+                </div>
+                <div id="sw-ms" class="sw-ms-text">.00</div>
+            </div>
+
+            <!-- টাইমার সময় সেট করার ঘর (শুধুমাত্র Timer মোডে দেখাবে) -->
+            <div id="timer-setup-area" class="timer-inputs" style="display: none;">
+                <input type="number" id="timer-min-input" min="0" max="999" placeholder="মিনিট (Min)">
+                <span>:</span>
+                <input type="number" id="timer-sec-input" min="0" max="59" placeholder="সেকেন্ড (Sec)">
+                <button onclick="setTimerDuration()" class="sw-pill-btn">সেট করুন</button>
+            </div>
+
+            <!-- নিচের কন্ট্রোল বাটনগুলো (ছবির মতো ক্যাপসুল শেইপ) -->
+            <div class="sw-controls">
+                <button id="sw-start-btn" onclick="startPauseSw()" class="sw-pill-btn primary">Start</button>
+                <button id="sw-lap-btn" onclick="recordLap()" class="sw-pill-btn">Lap</button>
+                <button onclick="resetSw()" class="sw-pill-btn">Reset</button>
+            </div>
+
+            <!-- ল্যাপ (Lap) তালিকা -->
+            <div id="sw-laps-list" class="sw-laps-container"></div>
         </div>
     </section>
 
