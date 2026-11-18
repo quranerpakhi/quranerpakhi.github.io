@@ -627,3 +627,161 @@ async function loadPrayerTimes(city) {
         container.innerHTML = "<p style='text-align:center; color:red; grid-column: 1 / -1;'>এরর: " + error.message + "</p>";
     }
 }
+// স্টপওয়াচ ও টাইমার ভেরিয়েবলসমূহ
+var swMode = 'stopwatch';
+var swRunning = false;
+var swInterval = null;
+var swElapsedMs = 0;
+var timerRemainingMs = 0;
+var swLastTick = 0;
+var lapCounter = 0;
+
+function toggleStopwatch() {
+    var swSection = document.getElementById('stopwatch-section');
+    if (!swSection) return;
+
+    if (swSection.style.display === 'block') {
+        swSection.style.display = 'none';
+    } else {
+        if (typeof closeAllSections === 'function') {
+            closeAllSections('stopwatch-section');
+        }
+        swSection.style.display = 'block';
+        swSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function switchSwMode(mode) {
+    resetSw();
+    swMode = mode;
+
+    var tabSw = document.getElementById('sw-tab-stopwatch');
+    var tabTm = document.getElementById('sw-tab-timer');
+    var timerSetup = document.getElementById('timer-setup-area');
+    var lapBtn = document.getElementById('sw-lap-btn');
+
+    if (mode === 'stopwatch') {
+        tabSw.classList.add('active');
+        tabTm.classList.remove('active');
+        timerSetup.style.display = 'none';
+        lapBtn.style.display = 'inline-block';
+    } else {
+        tabTm.classList.add('active');
+        tabSw.classList.remove('active');
+        timerSetup.style.display = 'flex';
+        lapBtn.style.display = 'none';
+    }
+}
+
+function updateSwDisplay(totalMs) {
+    if (totalMs < 0) totalMs = 0;
+    var totalSeconds = Math.floor(totalMs / 1000);
+    var minutes = Math.floor(totalSeconds / 60);
+    var seconds = totalSeconds % 60;
+    var centiseconds = Math.floor((totalMs % 1000) / 10);
+
+    document.getElementById('sw-min').innerText = minutes < 10 ? "0" + minutes : minutes;
+    document.getElementById('sw-sec').innerText = seconds < 10 ? "0" + seconds : seconds;
+    document.getElementById('sw-ms').innerText = "." + (centiseconds < 10 ? "0" + centiseconds : centiseconds);
+}
+
+function setTimerDuration() {
+    var minVal = parseInt(document.getElementById('timer-min-input').value, 10) || 0;
+    var secVal = parseInt(document.getElementById('timer-sec-input').value, 10) || 0;
+    timerRemainingMs = (minVal * 60 + secVal) * 1000;
+    updateSwDisplay(timerRemainingMs);
+}
+
+function startPauseSw() {
+    var startBtn = document.getElementById('sw-start-btn');
+
+    if (!swRunning) {
+        if (swMode === 'timer' && timerRemainingMs <= 0) {
+            setTimerDuration();
+            if (timerRemainingMs <= 0) {
+                alert("দয়া করে মিনিট বা সেকেন্ড সেট করুন!");
+                return;
+            }
+        }
+        swRunning = true;
+        startBtn.innerText = "Pause";
+        swLastTick = Date.now();
+
+        swInterval = setInterval(function() {
+            var now = Date.now();
+            var delta = now - swLastTick;
+            swLastTick = now;
+
+            if (swMode === 'stopwatch') {
+                swElapsedMs += delta;
+                updateSwDisplay(swElapsedMs);
+            } else {
+                timerRemainingMs -= delta;
+                if (timerRemainingMs <= 0) {
+                    timerRemainingMs = 0;
+                    updateSwDisplay(0);
+                    clearInterval(swInterval);
+                    swRunning = false;
+                    startBtn.innerText = "Start";
+                    playAlarmBeep();
+                } else {
+                    updateSwDisplay(timerRemainingMs);
+                }
+            }
+        }, 30);
+    } else {
+        swRunning = false;
+        clearInterval(swInterval);
+        startBtn.innerText = "Continue";
+    }
+}
+
+function resetSw() {
+    swRunning = false;
+    clearInterval(swInterval);
+    swElapsedMs = 0;
+    timerRemainingMs = 0;
+    lapCounter = 0;
+    updateSwDisplay(0);
+    document.getElementById('sw-start-btn').innerText = "Start";
+    document.getElementById('sw-laps-list').innerHTML = "";
+}
+
+function recordLap() {
+    if (swMode !== 'stopwatch' || swElapsedMs === 0) return;
+    lapCounter++;
+    var min = document.getElementById('sw-min').innerText;
+    var sec = document.getElementById('sw-sec').innerText;
+    var ms = document.getElementById('sw-ms').innerText;
+
+    var lapList = document.getElementById('sw-laps-list');
+    var row = document.createElement('div');
+    row.className = 'sw-lap-row';
+    row.innerHTML = '<span>Lap ' + lapCounter + '</span><strong>' + min + ':' + sec + ms + '</strong>';
+    lapList.insertBefore(row, lapList.firstChild);
+}
+
+// টাইমার শেষ হলে অ্যালার্ম বিপ সাউন্ড বাজানোর ফাংশন
+function playAlarmBeep() {
+    try {
+        var AudioCtx = window.AudioContext || window.webkitAudioContext;
+        var ctx = new AudioCtx();
+        var count = 0;
+        var beepTimer = setInterval(function() {
+            var osc = ctx.createOscillator();
+            var gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.25);
+
+            count++;
+            if (count >= 5) clearInterval(beepTimer);
+        }, 400);
+    } catch (e) {
+        alert("⏰ সময় শেষ হয়েছে!");
+    }
+}
