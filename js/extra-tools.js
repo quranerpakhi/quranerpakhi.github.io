@@ -265,3 +265,43 @@ function copyText(elementId, btnElement) {
         }, 2000);
     });
 }
+// ৫. About Us এবং Contact বাটন সচল করা
+function toggleAbout() {
+    var about = document.getElementById('about-section');
+    if (!about) return;
+    if (about.style.display === 'block') {
+        about.style.display = 'none';
+    } else {
+        closeOtherBoxes('about-section');
+        about.style.display = 'block';
+        about.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function toggleContact() {
+    var contact = document.getElementById('contact-section');
+    if (!contact) return;
+    if (contact.style.display === 'block') {
+        contact.style.display = 'none';
+    } else {
+        closeOtherBoxes('contact-section');
+        contact.style.display = 'block';
+        contact.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function copyEmail() {
+    navigator.clipboard.writeText("quranerpakhi@protonmail.com").then(function() {
+        var btn = document.getElementById('email-copy-btn');
+        if (!btn) return;
+        var orig = btn.innerText;
+        btn.innerText = "✓ ইমেইল কপি হয়েছে!";
+        btn.style.backgroundColor = "#27ae60";
+        btn.style.color = "#ffffff";
+        setTimeout(function() {
+            btn.innerText = orig;
+            btn.style.backgroundColor = "";
+            btn.style.color = "";
+        }, 2500);
+    });
+}
