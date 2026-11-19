@@ -222,10 +222,22 @@ async function searchArabicWord() {
     }
 
     // ১. বাংলা থেকে আরবী ও ইংরেজি অর্থ (আগে ইংরেজি বের করে তারপর আরবী করলে নিখুঁত হয়)
+        // ১. বাংলা থেকে আরবী ও ইংরেজি অর্থ (প্রসঙ্গ ঠিক রেখে নিখুঁত আরবী বের করবে)
     if (isBangla) {
         resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>আরবী অর্থ খোঁজা হচ্ছে...</span>";
+        
+        // প্রথমে সরাসরি বাংলা থেকে আরবী চেষ্টা করবে (সবচেয়ে নির্ভুল অর্থের জন্য)
+        var directAr = await getMeaning("bn", "ar", rawWord);
         var enFromBn = await getMeaning("bn", "en", rawWord);
-        var arText = enFromBn ? await getMeaning("en", "ar", enFromBn) : await getMeaning("bn", "ar", rawWord);
+        var arText = directAr;
+
+        // যদি সরাসরি না পাওয়া যায়, তবে ইংরেজি শব্দের সাথে 'A/The' যোগ করে বিশেষ্য হিসেবে আরবী বের করবে
+        if (!arText && enFromBn) {
+            var contextEn = enFromBn.indexOf(" ") === -1 ? "A " + enFromBn.toLowerCase() : enFromBn;
+            var contextAr = await getMeaning("en", "ar", contextEn);
+            // শুরুতে একবচন বোঝাতে আসা বাড়তি 'كتاب واحد' বা 'واحد' পরিষ্কার করা
+            arText = contextAr.replace(/\s*واحد\s*$/g, "").trim();
+        }
 
         if (arText) {
             var html = '<div style="display: block; margin-bottom: 8px;">আরবী অর্থ: <span style="color:#d35400; font-size:28px; font-weight:bold;">' + arText + '</span></div>';
@@ -238,6 +250,7 @@ async function searchArabicWord() {
         }
         return;
     }
+
 
     // ২. নিজস্ব বিশেষ শব্দের তালিকা
     if (typeof customDictionary !== "undefined" && customDictionary.hasOwnProperty(rawWord)) {
