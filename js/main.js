@@ -218,59 +218,85 @@ async function searchArabicWord() {
         return;
     }
 
-       // ৩. আরবী থেকে বাংলা ও ইংরেজি অর্থ (ক্রিয়াপদ ও বহুবচন আলাদা করে চেনার লজিকসহ)
+           // ৩. আরবী থেকে বাংলা ও ইংরেজি অর্থ (সব ধরনের ক্রিয়াপদ ও বহুবচন নিখুঁতভাবে চেনার লজিকসহ)
     resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>সঠিক অর্থ খোঁজা হচ্ছে...</span>";
 
-    // ক্রিয়াপদ নাকি বিশেষ্য তা যাচাই করার নিয়ম
     var hasTanweenOrAl = /[\u064B\u064C\u064D]/.test(rawWord) || rawWord.indexOf("\u0627\u0644") === 0;
     var endsWithSukun = rawWord.slice(-1) === "\u0652";
-    var startsWithAlifOrTa = /^[\u0627\u0623\u0625\u0671\u062A]/.test(rawWord);
+    var firstChar = rawWord.charAt(0);
+    var isAmrAlif = /^[\u0627\u0623\u0625\u0671]/.test(rawWord);
 
     var queryForEn = rawWord;
+    var pronounPrefix = "";
     var posTag = "";
 
     if (rawWord.indexOf(" ") === -1) {
         if (hasTanweenOrAl) {
-            // তানবীন বা আলিফ-লাম থাকলে সেটি নিশ্চিতভাবেই বিশেষ্য (যেমন: كُتُبٌ)
-            queryForEn = "\u0628\u0639\u0636 " + rawWord; // 'بعض' (কিছু) যোগ করলে বহুবচন ঠিক থাকে
+            // তানবীন বা আলিফ-লাম থাকলে সেটি নিশ্চিতভাবেই বিশেষ্য (Noun)
+            queryForEn = "\u0628\u0639\u0636 " + rawWord;
             posTag = "বিশেষ্য (Noun)";
-        } else if (endsWithSukun && startsWithAlifOrTa) {
-            // আদেশসূচক ক্রিয়া (আমর)
+        } else if (endsWithSukun && (isAmrAlif || firstChar === "\u062A")) {
+            // আদেশসূচক ক্রিয়া (আমর - যেমন: اُكْتُبْ বা اِقْرَأْ)
             queryForEn = "\u0623\u0646\u062A " + rawWord;
+            pronounPrefix = "you";
             posTag = "আদেশসূচক ক্রিয়া (Amr)";
+        } else if (firstChar === "\u0623") {
+            // মুতাকাল্লিম একবচন (যেমন: أَكْتُبُ - আমি লিখি)
+            queryForEn = "\u0623\u0646\u0627 " + rawWord;
+            pronounPrefix = "i";
+        } else if (firstChar === "\u0646") {
+            // মুতাকাল্লিম বহুবচন (যেমন: نَكْتُبُ - আমরা লিখি)
+            queryForEn = "\u0646\u062D\u0646 " + rawWord;
+            pronounPrefix = "we";
+        } else if (firstChar === "\u062A") {
+            // হাজির বা মুয়ান্নাস (যেমন: تَكْتُبُ - তুমি লেখো)
+            queryForEn = "\u0623\u0646\u062A " + rawWord;
+            pronounPrefix = "you";
         } else {
-            // হরকতযুক্ত ৩ অক্ষরের ক্রিয়াপদ (যেমন: كَتَبَ) চেনার জন্য 'هو' (সে) যোগ করা হলো
+            // গায়েব একবচন মাদি বা মুদারে (যেমন: كَتَبَ বা يَكْتُبُ)
             queryForEn = "\u0647\u0648 " + rawWord;
+            pronounPrefix = "he";
         }
     }
 
     var enFromAr = await getGoogleTranslation("ar", "en", queryForEn);
+    var fullEnglishSentence = enFromAr;
 
-    // শুরুর বাড়তি 'some' বা 'he' পরিষ্কার করে মূল ইংরেজি অর্থ বের করা
-    if (enFromAr) {
-        if (hasTanweenOrAl) {
-            enFromAr = enFromAr.replace(/^some\s+/i, "").trim();
-        } else if (queryForEn.indexOf("\u0647\u0648 ") === 0) {
-            if (/^he\s+/i.test(enFromAr)) {
-                posTag = "ক্রিয়া (Verb)";
-                enFromAr = enFromAr.replace(/^he\s+/i, "").trim();
-            } else {
-                // যদি ক্রিয়াপদ না হয়ে অন্য কিছু হয়, তবে মূল শব্দটির অর্থ নেবে
-                enFromAr = await getGoogleTranslation("ar", "en", rawWord);
+    // ক্রিয়াপদ নাকি বিশেষ্য তা যাচাই ও ইংরেজি অর্থ পরিষ্কার করা
+    if (enFromAr && pronounPrefix) {
+        var regexPronoun = new RegExp("^" + pronounPrefix + "\\s+", "i");
+        if (regexPronoun.test(enFromAr)) {
+            posTag = posTag || "ক্রিয়া (Verb)";
+            enFromAr = enFromAr.replace(regexPronoun, "").trim();
+        } else if (posTag === "আদেশসূচক ক্রিয়া (Amr)") {
+            fullEnglishSentence = "you " + enFromAr;
+        } else {
+            // ক্রিয়াপদ না হলে মূল শব্দের সাধারণ অর্থ নেবে
+            enFromAr = await getGoogleTranslation("ar", "en", rawWord);
+            fullEnglishSentence = enFromAr;
+        }
+    } else if (hasTanweenOrAl && enFromAr) {
+        enFromAr = enFromAr.replace(/^some\s+/i, "").trim();
+        fullEnglishSentence = enFromAr;
+    }
+
+    // বাংলা অর্থ বের করা (ক্রিয়াপদ হলে সর্বনামসহ অনুবাদ করে সর্বনাম বাদ দেবে, যাতে 'writes' বহুবচন না হয়ে 'লেখে' হয়)
+    var bnFromAr = "";
+    if (posTag.indexOf("ক্রিয়া") !== -1 && fullEnglishSentence) {
+        var bnSentence = await getGoogleTranslation("en", "bn", fullEnglishSentence);
+        bnFromAr = bnSentence.replace(/^(সে|তিনি|আমি|আমরা|তুমি|আপনি|তারা)\s+/g, "").trim();
+    } else if (enFromAr) {
+        var enForBangla = enFromAr;
+        if (enFromAr.indexOf(" ") === -1) {
+            var lowerEn = enFromAr.toLowerCase();
+            if (lowerEn.slice(-1) === "s" && lowerEn.slice(-2) !== "ss") {
+                enForBangla = "many " + enFromAr;
             }
         }
+        bnFromAr = await getGoogleTranslation("en", "bn", enForBangla);
+    } else {
+        bnFromAr = await getGoogleTranslation("ar", "bn", rawWord);
     }
-
-    // ইংরেজি অর্থ বহুবচন (যেমন books) হলে বাংলায় যেন 'বইসমূহ' বা 'অনেক বই' দেখায়
-    var enForBangla = enFromAr;
-    if (enFromAr && enFromAr.indexOf(" ") === -1) {
-        var lowerEn = enFromAr.toLowerCase();
-        if (lowerEn.slice(-1) === "s" && lowerEn.slice(-2) !== "ss") {
-            enForBangla = "many " + enFromAr;
-        }
-    }
-
-    var bnFromAr = enForBangla ? await getGoogleTranslation("en", "bn", enForBangla) : await getGoogleTranslation("ar", "bn", rawWord);
 
     if (bnFromAr) {
         var arHtml = '<div style="display: block; margin-bottom: 8px;">বাংলা অর্থ: <span style="color:#d35400; font-size:26px; font-weight:bold;">' + bnFromAr + '</span></div>';
@@ -284,6 +310,7 @@ async function searchArabicWord() {
     } else {
         resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি, আবার চেষ্টা করুন।</span>";
     }
+
 
 // Contact সেকশন খোলা এবং বন্ধ করার ফাংশন
 function toggleContact() {
