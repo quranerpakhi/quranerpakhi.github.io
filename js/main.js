@@ -172,67 +172,73 @@ async function searchArabicWord() {
     var inputField = document.getElementById('arabic-input');
     if (!rawWord) return;
 
-    // ইনপুটটি বাংলা অক্ষর দিয়ে লেখা কি না তা চেক করা (Unicode range: \u0980-\u09FF)
     var isBangla = /[\u0980-\u09FF]/.test(rawWord);
 
-    // বাংলা লিখলে লেখা বাম দিক থেকে, আরবী লিখলে ডান দিক থেকে দেখাবে
     if (inputField) {
         inputField.style.direction = isBangla ? "ltr" : "rtl";
         inputField.style.textAlign = isBangla ? "left" : "right";
     }
 
-    // ১ম ধাপ: বাংলা থেকে আরবী ও ইংরেজি অর্থ বের করা
+    // অ্যাপ (WebView) এবং ব্রাউজার উভয় জায়গা থেকে নিরাপদে ডেটা আনার ফাংশন
+    async function fetchTranslateSafe(sl, tl, text) {
+        var googleHost = "https://" + "translate." + "googleapis." + "com";
+        var targetUrl = new URL("/translate_a/single", googleHost);
+        targetUrl.searchParams.set("client", "gtx");
+        targetUrl.searchParams.set("sl", sl);
+        targetUrl.searchParams.set("tl", tl);
+        targetUrl.searchParams.set("dt", "t");
+        targetUrl.searchParams.set("q", text);
+
+        // ১ম চেষ্টা: সরাসরি রিকোয়েস্ট
+        try {
+            var res = await fetch(targetUrl.toString());
+            if (res.ok) {
+                var data = await res.json();
+                var out = "";
+                if (Array.isArray(data) && Array.isArray(data.at(0))) {
+                    data.at(0).forEach(function(item) {
+                        if (Array.isArray(item) && typeof item.at(0) === "string") {
+                            out += item.at(0);
+                        }
+                    });
+                }
+                if (out) return out;
+            }
+        } catch (e) {}
+
+        // ২য় চেষ্টা: অ্যাপ থেকে ব্লক হলে ব্যাকআপ API (MyMemory) ব্যবহার করবে
+        try {
+            var backupUrl = new URL("/get", "https://" + "api." + "mymemory." + "translated." + "net");
+            backupUrl.searchParams.set("q", text);
+            backupUrl.searchParams.set("langpair", sl + "|" + tl);
+            var bRes = await fetch(backupUrl.toString());
+            if (bRes.ok) {
+                var bData = await bRes.json();
+                if (bData && bData.responseData && bData.responseData.translatedText) {
+                    return bData.responseData.translatedText;
+                }
+            }
+        } catch (e2) {}
+
+        return "";
+    }
+
+    // ১. বাংলা থেকে আরবী ও ইংরেজি অর্থ বের করা
     if (isBangla) {
         resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>আরবী অর্থ খোঁজা হচ্ছে...</span>";
         try {
-            var googleHost = "https://" + "translate." + "googleapis." + "com";
-
-            // বাংলা থেকে আরবী (হরকতসহ)
-            var arUrl = new URL("/translate_a/single", googleHost);
-            arUrl.searchParams.set("client", "gtx");
-            arUrl.searchParams.set("sl", "bn");
-            arUrl.searchParams.set("tl", "ar");
-            arUrl.searchParams.set("dt", "t");
-            arUrl.searchParams.set("q", rawWord);
-
-            // বাংলা থেকে ইংরেজি
-            var enUrl = new URL("/translate_a/single", googleHost);
-            enUrl.searchParams.set("client", "gtx");
-            enUrl.searchParams.set("sl", "bn");
-            enUrl.searchParams.set("tl", "en");
-            enUrl.searchParams.set("dt", "t");
-            enUrl.searchParams.set("q", rawWord);
-
-            var responses = await Promise.all([
-                fetch(arUrl.toString()),
-                fetch(enUrl.toString())
+            var results = await Promise.all([
+                fetchTranslateSafe("bn", "ar", rawWord),
+                fetchTranslateSafe("bn", "en", rawWord)
             ]);
 
-            var arData = await responses.at(0).json();
-            var enData = await responses.at(1).json();
-
-            var arabicResult = "";
-            if (Array.isArray(arData) && Array.isArray(arData.at(0))) {
-                arData.at(0).forEach(function(item) {
-                    if (Array.isArray(item) && typeof item.at(0) === "string") {
-                        arabicResult += item.at(0);
-                    }
-                });
-            }
-
-            var englishResult = "";
-            if (Array.isArray(enData) && Array.isArray(enData.at(0))) {
-                enData.at(0).forEach(function(item) {
-                    if (Array.isArray(item) && typeof item.at(0) === "string") {
-                        englishResult += item.at(0);
-                    }
-                });
-            }
+            var arabicResult = results.at(0);
+            var englishResult = results.at(1);
 
             if (arabicResult && arabicResult !== rawWord) {
-                var bnOut = 'আরবী অর্থ: <span style="color:#d35400; font-size:28px; font-weight:bold;">' + arabicResult + '</span>';
+                var bnOut = '<div style="display: block; margin-bottom: 6px;">আরবী অর্থ: <span style="color:#d35400; font-size:28px; font-weight:bold;">' + arabicResult + '</span></div>';
                 if (englishResult) {
-                    bnOut += '<div style="font-size:17px; color:#1e8449; margin-top:6px;">ইংরেজি অর্থ: <strong>' + englishResult + '</strong></div>';
+                    bnOut += '<div style="display: block; font-size:17px; color:#1e8449;">ইংরেজি অর্থ: <strong>' + englishResult + '</strong></div>';
                 }
                 resultDiv.innerHTML = bnOut;
                 return;
@@ -246,12 +252,12 @@ async function searchArabicWord() {
         }
     }
 
-    // ২য় ধাপ: নিজস্ব বিশেষ শব্দের তালিকায় আরবী শব্দটি খোঁজা
+    // ২. নিজস্ব বিশেষ শব্দের তালিকায় আরবী শব্দটি খোঁজা
     if (customDictionary.hasOwnProperty(rawWord)) {
         var item = customDictionary[rawWord];
-        resultDiv.innerHTML = 'বাংলা অর্থ: <span style="color:#d35400; font-size:22px;">' + item.bn + '</span>' +
-            '<div style="font-size:17px; color:#1e8449; margin-top:6px;">ইংরেজি অর্থ: <strong>' + item.en + '</strong></div>' +
-            '<div style="font-size:14px; color:#555; margin-top:5px;">পদ প্রকরণ: <strong>' + item.pos + '</strong></div>';
+        resultDiv.innerHTML = '<div style="display: block; margin-bottom: 6px;">বাংলা অর্থ: <span style="color:#d35400; font-size:26px; font-weight:bold;">' + item.bn + '</span></div>' +
+            '<div style="display: block; font-size:17px; color:#1e8449; margin-bottom: 5px;">ইংরেজি অর্থ: <strong>' + item.en + '</strong></div>' +
+            '<div style="display: block; font-size:15px; color:#555555;">পদ প্রকরণ: <strong>' + item.pos + '</strong></div>';
         return;
     }
 
@@ -273,7 +279,7 @@ async function searchArabicWord() {
     var wordBn = "";
     var wordEn = "";
 
-    // ৩য় ধাপ: কুরআনিক শব্দ খোঁজা
+    // ৩. কুরআনিক শব্দ খোঁজা
     try {
         var alQuranUrl = new URL("/v1/search/" + encodeURIComponent(cleanRoot) + "/all/quran-simple-clean", "https://" + "api." + "alquran." + "cloud");
         var searchRes = await fetch(alQuranUrl.toString());
@@ -321,54 +327,21 @@ async function searchArabicWord() {
                 }
             }
         }
-    } catch (qErr) {
-        console.log("Quran lookup skipped.");
-    }
+    } catch (qErr) {}
 
     if (wordBn && wordBn !== rawWord) {
-        var qOut = 'বাংলা অর্থ: <span style="color:#d35400; font-size:22px;">' + wordBn + '</span>';
+        var qOut = '<div style="display: block; margin-bottom: 6px;">বাংলা অর্থ: <span style="color:#d35400; font-size:26px; font-weight:bold;">' + wordBn + '</span></div>';
         if (wordEn) {
-            qOut += '<div style="font-size:17px; color:#1e8449; margin-top:6px;">ইংরেজি অর্থ: <strong>' + wordEn + '</strong></div>';
+            qOut += '<div style="display: block; font-size:17px; color:#1e8449;">ইংরেজি অর্থ: <strong>' + wordEn + '</strong></div>';
         }
         resultDiv.innerHTML = qOut;
         return;
     }
 
-    // ৪র্থ ধাপ: সাধারণ আরবী থেকে বাংলা ও ইংরেজি অর্থ বের করা
+    // ৪. সাধারণ আরবী থেকে বাংলা ও ইংরেজি অর্থ বের করা
     try {
-        var googleHostAr = "https://" + "translate." + "googleapis." + "com";
         var isDefinitelyNoun = /[\u064B\u064C\u064D]/.test(normalizedWord) || normalizedWord.indexOf("\u0627\u0644") === 0;
-
-        var checkUrl = new URL("/translate_a/single", googleHostAr);
-        checkUrl.searchParams.set("client", "gtx");
-        checkUrl.searchParams.set("sl", "ar");
-        checkUrl.searchParams.set("tl", "en");
-        checkUrl.searchParams.append("dt", "t");
-        checkUrl.searchParams.append("dt", "bd");
-        checkUrl.searchParams.set("q", normalizedWord);
-
-        var checkRes = await fetch(checkUrl.toString());
-        var checkData = await checkRes.json();
-
-        var posTag = "";
-        var isVerb = false;
-
-        if (isDefinitelyNoun) {
-            posTag = "বিশেষ্য (Noun)";
-        } else if (Array.isArray(checkData) && Array.isArray(checkData.at(1))) {
-            var firstCat = checkData.at(1).at(0);
-            if (Array.isArray(firstCat)) {
-                var rawPos = firstCat.at(0);
-                if (rawPos === "verb") {
-                    isVerb = true;
-                    posTag = "ক্রিয়া (Verb)";
-                } else if (rawPos === "noun") {
-                    posTag = "বিশেষ্য (Noun)";
-                } else if (typeof rawPos === "string") {
-                    posTag = rawPos;
-                }
-            }
-        }
+        var posTag = isDefinitelyNoun ? "বিশেষ্য (Noun)" : "";
 
         var queryWord = normalizedWord;
         if (normalizedWord.indexOf(" ") === -1) {
@@ -379,73 +352,44 @@ async function searchArabicWord() {
             if (endsWithSukun && (startsWithAlif || startsWithTa)) {
                 queryWord = "\u0623\u0646\u062A " + normalizedWord;
                 posTag = "আদেশসূচক ক্রিয়া (Amr / Imperative)";
-            } else if (isVerb) {
-                queryWord = "\u0647\u0648 " + normalizedWord;
             } else if (isDefinitelyNoun) {
                 queryWord = "\u0628\u0639\u0636 " + normalizedWord;
             }
         }
 
-        var enUrlAr = new URL("/translate_a/single", googleHostAr);
-        enUrlAr.searchParams.set("client", "gtx");
-        enUrlAr.searchParams.set("sl", "ar");
-        enUrlAr.searchParams.set("tl", "en");
-        enUrlAr.searchParams.set("dt", "t");
-        enUrlAr.searchParams.set("q", queryWord);
+        var englishMeaning = await fetchTranslateSafe("ar", "en", queryWord);
+        if (isDefinitelyNoun && englishMeaning) {
+            englishMeaning = englishMeaning.replace(/^some\s+/gi, "").trim();
+        }
 
-var enResAr = await fetch(enUrlAr.toString());
-var enDataAr = await enResAr.json();
-var englishMeaning = "";
-if (Array.isArray(enDataAr) && Array.isArray(enDataAr.at(0))) {
-enDataAr.at(0).forEach(function(item) {
-if (Array.isArray(item) && typeof item.at(0) === "string") {
-englishMeaning += item.at(0);
-}
-});
-}
-if (isDefinitelyNoun && englishMeaning) {
-englishMeaning = englishMeaning.replace(/^some\s+/gi, "").trim();
-}
-var englishForBangla = englishMeaning;
-var lowerEn = englishMeaning.toLowerCase();
-var isEnglishPlural = isDefinitelyNoun && lowerEn.slice(-1) === "s" && lowerEn.slice(-2) !== "ss";
-if (isEnglishPlural) {
-englishForBangla = "many " + englishMeaning;
-}
-var finalBangla = "";
-if (englishForBangla && englishForBangla.toLowerCase() !== normalizedWord.toLowerCase()) {
-var bnUrlAr = new URL("/translate_a/single", googleHostAr);
-bnUrlAr.searchParams.set("client", "gtx");
-bnUrlAr.searchParams.set("sl", "en");
-bnUrlAr.searchParams.set("tl", "bn");
-bnUrlAr.searchParams.set("dt", "t");
-bnUrlAr.searchParams.set("q", englishForBangla);
-var bnResAr = await fetch(bnUrlAr.toString());
-var bnDataAr = await bnResAr.json();
-if (Array.isArray(bnDataAr) && Array.isArray(bnDataAr.at(0))) {
-bnDataAr.at(0).forEach(function(item) {
-if (Array.isArray(item) && typeof item.at(0) === "string") {
-finalBangla += item.at(0);
-}
-});
-}
-}
+        var englishForBangla = englishMeaning;
+        var lowerEn = englishMeaning.toLowerCase();
+        var isEnglishPlural = isDefinitelyNoun && lowerEn.slice(-1) === "s" && lowerEn.slice(-2) !== "ss";
+        if (isEnglishPlural) {
+            englishForBangla = "many " + englishMeaning;
+        }
+
+        var finalBangla = "";
+        if (englishForBangla && englishForBangla.toLowerCase() !== normalizedWord.toLowerCase()) {
+            finalBangla = await fetchTranslateSafe("en", "bn", englishForBangla);
+        }
+
         if (finalBangla) {
             var outputHTML = '<div style="display: block; margin-bottom: 6px;">বাংলা অর্থ: <span style="color:#d35400; font-size:26px; font-weight:bold;">' + finalBangla + '</span></div>';
             if (englishMeaning) {
                 outputHTML += '<div style="display: block; font-size:17px; color:#1e8449; margin-bottom: 5px;">ইংরেজি অর্থ: <strong>' + englishMeaning + '</strong></div>';
             }
             if (posTag) {
-                outputHTML += '<div style="display: block; font-size:15px; color:#555555;">পদ প্রকরণ: <strong>' + posTag + '</strong></div>';
-            }
-            resultDiv.innerHTML = outputHTML;
-            return;
-        } else {
-            resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি, আবার চেষ্টা করুন।</span>";
-        }
-    } catch (e) {
-        resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি, আবার চেষ্টা করুন।</span>";
-    }
+outputHTML += 'পদ প্রকরণ: ' + posTag + '';
+}
+resultDiv.innerHTML = outputHTML;
+return;
+} else {
+resultDiv.innerHTML = "অর্থ খুঁজে পাওয়া যায়নি, আবার চেষ্টা করুন।";
+}
+} catch (e) {
+resultDiv.innerHTML = "অর্থ খুঁজে পাওয়া যায়নি, আবার চেষ্টা করুন।";
+}
 }
 
 
