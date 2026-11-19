@@ -218,22 +218,72 @@ async function searchArabicWord() {
         return;
     }
 
-    // ৩. আরবী থেকে বাংলা ও ইংরেজি অর্থ
+       // ৩. আরবী থেকে বাংলা ও ইংরেজি অর্থ (ক্রিয়াপদ ও বহুবচন আলাদা করে চেনার লজিকসহ)
     resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>সঠিক অর্থ খোঁজা হচ্ছে...</span>";
-    var bnFromAr = await getGoogleTranslation("ar", "bn", rawWord);
-    var enFromAr = await getGoogleTranslation("ar", "en", rawWord);
+
+    // ক্রিয়াপদ নাকি বিশেষ্য তা যাচাই করার নিয়ম
+    var hasTanweenOrAl = /[\u064B\u064C\u064D]/.test(rawWord) || rawWord.indexOf("\u0627\u0644") === 0;
+    var endsWithSukun = rawWord.slice(-1) === "\u0652";
+    var startsWithAlifOrTa = /^[\u0627\u0623\u0625\u0671\u062A]/.test(rawWord);
+
+    var queryForEn = rawWord;
+    var posTag = "";
+
+    if (rawWord.indexOf(" ") === -1) {
+        if (hasTanweenOrAl) {
+            // তানবীন বা আলিফ-লাম থাকলে সেটি নিশ্চিতভাবেই বিশেষ্য (যেমন: كُتُبٌ)
+            queryForEn = "\u0628\u0639\u0636 " + rawWord; // 'بعض' (কিছু) যোগ করলে বহুবচন ঠিক থাকে
+            posTag = "বিশেষ্য (Noun)";
+        } else if (endsWithSukun && startsWithAlifOrTa) {
+            // আদেশসূচক ক্রিয়া (আমর)
+            queryForEn = "\u0623\u0646\u062A " + rawWord;
+            posTag = "আদেশসূচক ক্রিয়া (Amr)";
+        } else {
+            // হরকতযুক্ত ৩ অক্ষরের ক্রিয়াপদ (যেমন: كَتَبَ) চেনার জন্য 'هو' (সে) যোগ করা হলো
+            queryForEn = "\u0647\u0648 " + rawWord;
+        }
+    }
+
+    var enFromAr = await getGoogleTranslation("ar", "en", queryForEn);
+
+    // শুরুর বাড়তি 'some' বা 'he' পরিষ্কার করে মূল ইংরেজি অর্থ বের করা
+    if (enFromAr) {
+        if (hasTanweenOrAl) {
+            enFromAr = enFromAr.replace(/^some\s+/i, "").trim();
+        } else if (queryForEn.indexOf("\u0647\u0648 ") === 0) {
+            if (/^he\s+/i.test(enFromAr)) {
+                posTag = "ক্রিয়া (Verb)";
+                enFromAr = enFromAr.replace(/^he\s+/i, "").trim();
+            } else {
+                // যদি ক্রিয়াপদ না হয়ে অন্য কিছু হয়, তবে মূল শব্দটির অর্থ নেবে
+                enFromAr = await getGoogleTranslation("ar", "en", rawWord);
+            }
+        }
+    }
+
+    // ইংরেজি অর্থ বহুবচন (যেমন books) হলে বাংলায় যেন 'বইসমূহ' বা 'অনেক বই' দেখায়
+    var enForBangla = enFromAr;
+    if (enFromAr && enFromAr.indexOf(" ") === -1) {
+        var lowerEn = enFromAr.toLowerCase();
+        if (lowerEn.slice(-1) === "s" && lowerEn.slice(-2) !== "ss") {
+            enForBangla = "many " + enFromAr;
+        }
+    }
+
+    var bnFromAr = enForBangla ? await getGoogleTranslation("en", "bn", enForBangla) : await getGoogleTranslation("ar", "bn", rawWord);
 
     if (bnFromAr) {
         var arHtml = '<div style="display: block; margin-bottom: 8px;">বাংলা অর্থ: <span style="color:#d35400; font-size:26px; font-weight:bold;">' + bnFromAr + '</span></div>';
         if (enFromAr) {
-            arHtml += '<div style="display: block; font-size:17px; color:#1e8449;">ইংরেজি অর্থ: <strong>' + enFromAr + '</strong></div>';
+            arHtml += '<div style="display: block; font-size:17px; color:#1e8449; margin-bottom: 5px;">ইংরেজি অর্থ: <strong>' + enFromAr + '</strong></div>';
+        }
+        if (posTag) {
+            arHtml += '<div style="display: block; font-size:15px; color:#555555;">পদ প্রকরণ: <strong>' + posTag + '</strong></div>';
         }
         resultDiv.innerHTML = arHtml;
     } else {
         resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি, আবার চেষ্টা করুন।</span>";
     }
-}
-
 
 // Contact সেকশন খোলা এবং বন্ধ করার ফাংশন
 function toggleContact() {
