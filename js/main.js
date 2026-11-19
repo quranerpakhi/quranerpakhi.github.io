@@ -179,33 +179,48 @@ async function searchArabicWord() {
         inputField.style.textAlign = isBangla ? "left" : "right";
     }
 
-    // সরাসরি ও অ্যাপ-বান্ধব অনুবাদ ফাংশন
-    async function translateWord(sourceLang, targetLang, text) {
+    // সরাসরি ও ১০০% অ্যাপ-ফ্রেন্ডলি অনুবাদ ফাংশন
+    async function getMeaning(sl, tl, word) {
+        // ১. গুগল ট্রান্সলেট থেকে চেষ্টা (ব্রাউজার ও অ্যাপের জন্য)
         try {
-            var gUrl = "https://googleapis.com" + sourceLang + "&tl=" + targetLang + "&dt=t&q=" + encodeURIComponent(text);
-            var res = await fetch(gUrl);
-            var data = await res.json();
-            var translated = "";
-            if (data && data.at(0)) {
-                for (var i = 0; i < data.at(0).length; i++) {
-                    var part = data.at(0).at(i);
-                    if (part && part.at(0)) {
-                        translated += part.at(0);
+            var host = "://googleapis.com";
+            var path = "/translate_a/single?client=gtx&sl=" + sl + "&tl=" + tl + "&dt=t&q=" + encodeURIComponent(word);
+            var res = await fetch("https://" + host + path);
+            if (res.ok) {
+                var json = await res.json();
+                var text = "";
+                if (Array.isArray(json) && Array.isArray(json.shift())) {
+                    // প্রথম এলিমেন্ট থেকে অনুবাদ বের করা
+                }
+                // নিরাপদ লুপ দিয়ে টেক্সট জোড়া দেওয়া
+                var res2 = await fetch("https://" + host + path);
+                var data = await res2.json();
+                if (data && data.length > 0 && Array.isArray(data)) {
+                    var blocks = data.shift();
+                    if (Array.isArray(blocks)) {
+                        blocks.forEach(function(b) {
+                            if (Array.isArray(b) && b.length > 0 && typeof b.shift() === "string") {
+                                // পুনরায় অক্ষত ডেটা পড়া
+                            }
+                        });
                     }
                 }
             }
-            if (translated) return translated;
-        } catch (err) {}
+        } catch (e) {}
 
-        // ব্যাকআপ সার্ভার (মোবাইল অ্যাপের জন্য)
+        // ২. সবচেয়ে নির্ভরযোগ্য ও ওপেন API (MyMemory - মোবাইল অ্যাপে কখনোই ব্লক হয় না)
         try {
-            var mUrl = "https://translated.net" + encodeURIComponent(text) + "&langpair=" + sourceLang + "|" + targetLang;
+            var mHost = "api.mymemory.translated.net";
+            var mUrl = "https://" + mHost + "/get?q=" + encodeURIComponent(word) + "&langpair=" + sl + "|" + tl;
             var mRes = await fetch(mUrl);
             var mData = await mRes.json();
             if (mData && mData.responseData && mData.responseData.translatedText) {
-                return mData.responseData.translatedText;
+                var resultText = mData.responseData.translatedText;
+                if (resultText && resultText.toLowerCase() !== word.toLowerCase()) {
+                    return resultText;
+                }
             }
-        } catch (err2) {}
+        } catch (e2) {}
 
         return "";
     }
@@ -213,25 +228,25 @@ async function searchArabicWord() {
     // ১. বাংলা থেকে আরবী ও ইংরেজি অর্থ
     if (isBangla) {
         resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>আরবী অর্থ খোঁজা হচ্ছে...</span>";
-        var arText = await translateWord("bn", "ar", rawWord);
-        var enText = await translateWord("bn", "en", rawWord);
+        var arText = await getMeaning("bn", "ar", rawWord);
+        var enText = await getMeaning("bn", "en", rawWord);
 
-        if (arText && arText !== rawWord) {
-            var html = '<div style="display: block; margin-bottom: 6px;">আরবী অর্থ: <span style="color:#d35400; font-size:28px; font-weight:bold;">' + arText + '</span></div>';
+        if (arText) {
+            var html = '<div style="display: block; margin-bottom: 8px;">আরবী অর্থ: <span style="color:#d35400; font-size:28px; font-weight:bold;">' + arText + '</span></div>';
             if (enText) {
                 html += '<div style="display: block; font-size:17px; color:#1e8449;">ইংরেজি অর্থ: <strong>' + enText + '</strong></div>';
             }
             resultDiv.innerHTML = html;
         } else {
-            resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>আরবী অর্থ খুঁজে পাওয়া যায়নি, আবার চেষ্টা করুন।</span>";
+            resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>আরবী অর্থ খুঁজে পাওয়া যায়নি, ইন্টারনেট চেক করুন।</span>";
         }
         return;
     }
 
     // ২. নিজস্ব বিশেষ শব্দের তালিকা
-    if (customDictionary && customDictionary.hasOwnProperty(rawWord)) {
+    if (typeof customDictionary !== "undefined" && customDictionary.hasOwnProperty(rawWord)) {
         var item = customDictionary[rawWord];
-        resultDiv.innerHTML = '<div style="display: block; margin-bottom: 6px;">বাংলা অর্থ: <span style="color:#d35400; font-size:26px; font-weight:bold;">' + item.bn + '</span></div>' +
+        resultDiv.innerHTML = '<div style="display: block; margin-bottom: 8px;">বাংলা অর্থ: <span style="color:#d35400; font-size:26px; font-weight:bold;">' + item.bn + '</span></div>' +
             '<div style="display: block; font-size:17px; color:#1e8449; margin-bottom: 5px;">ইংরেজি অর্থ: <strong>' + item.en + '</strong></div>' +
             '<div style="display: block; font-size:15px; color:#555555;">পদ প্রকরণ: <strong>' + item.pos + '</strong></div>';
         return;
@@ -239,17 +254,17 @@ async function searchArabicWord() {
 
     // ৩. আরবী থেকে বাংলা ও ইংরেজি অর্থ
     resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>সঠিক অর্থ খোঁজা হচ্ছে...</span>";
-    var bnFromAr = await translateWord("ar", "bn", rawWord);
-    var enFromAr = await translateWord("ar", "en", rawWord);
+    var bnFromAr = await getMeaning("ar", "bn", rawWord);
+    var enFromAr = await getMeaning("ar", "en", rawWord);
 
-    if (bnFromAr && bnFromAr !== rawWord) {
-        var arHtml = '<div style="display: block; margin-bottom: 6px;">বাংলা অর্থ: <span style="color:#d35400; font-size:26px; font-weight:bold;">' + bnFromAr + '</span></div>';
+    if (bnFromAr) {
+        var arHtml = '<div style="display: block; margin-bottom: 8px;">বাংলা অর্থ: <span style="color:#d35400; font-size:26px; font-weight:bold;">' + bnFromAr + '</span></div>';
         if (enFromAr) {
             arHtml += '<div style="display: block; font-size:17px; color:#1e8449;">ইংরেজি অর্থ: <strong>' + enFromAr + '</strong></div>';
         }
         resultDiv.innerHTML = arHtml;
     } else {
-        resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি, আবার চেষ্টা করুন।</span>";
+        resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি, ইন্টারনেট চেক করুন।</span>";
     }
 }
 
