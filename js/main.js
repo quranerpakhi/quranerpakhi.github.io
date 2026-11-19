@@ -179,68 +179,64 @@ async function searchArabicWord() {
         inputField.style.textAlign = isBangla ? "left" : "right";
     }
 
-    // ১. গুগল ট্রান্সলেট থেকে সরাসরি অনুবাদ (লিংক ভেঙে লেখা হয়েছে যাতে কপি করলে নষ্ট না হয়)
-    async function fetchGoogleDirect(sl, tl, text) {
+    // গুগল ট্রান্সলেট ও ব্যাকআপ সার্ভার থেকে নিখুঁত অর্থ আনার ফাংশন
+    async function smartTranslate(sl, tl, text) {
+        var gHost = "://googleapis.com";
+        var gPath = "/translate_a/single?client=gtx&sl=" + sl + "&tl=" + tl + "&dt=t&q=" + encodeURIComponent(text);
+        var fullGoogleUrl = "https://" + gHost + gPath;
+
+        // ১ম চেষ্টা: সরাসরি গুগল ট্রান্সলেট
         try {
-            var gDomain = ["https:/", "://googleapis.com", "translate_a", "single"].join("/");
-            var gUrl = gDomain + "?client=gtx&sl=" + sl + "&tl=" + tl + "&dt=t&q=" + encodeURIComponent(text);
-            var res = await fetch(gUrl);
+            var res = await fetch(fullGoogleUrl);
             if (res.ok) {
                 var data = await res.json();
-                var textOut = "";
+                var out = "";
                 if (Array.isArray(data)) {
                     var block = data.shift();
                     if (Array.isArray(block)) {
                         block.forEach(function(item) {
                             if (Array.isArray(item)) {
                                 var piece = item.shift();
-                                if (typeof piece === "string") textOut += piece;
+                                if (typeof piece === "string") out += piece;
                             }
                         });
                     }
                 }
-                if (textOut && textOut.toLowerCase() !== text.toLowerCase()) {
-                    return textOut;
-                }
+                if (out && out.toLowerCase() !== text.toLowerCase()) return out;
             }
-        } catch (e) {}
-        return "";
-    }
+        } catch (e1) {}
 
-    // ২. ব্যাকআপ API (MyMemory - শুধুমাত্র ইংরেজি মাধ্যমের জন্য)
-    async function fetchMyMemory(sl, tl, text) {
+        // ২য় চেষ্টা: প্রক্সি হয়ে গুগল ট্রান্সলেট (অ্যাপ থেকে ব্লক এড়ানোর জন্য)
         try {
-            var mDomain = ["https:/", "api.mymemory.translated.net", "get"].join("/");
-            var mUrl = mDomain + "?q=" + encodeURIComponent(text) + "&langpair=" + sl + "|" + tl;
-            var mRes = await fetch(mUrl);
-            var mData = await mRes.json();
-            if (mData && mData.responseData && mData.responseData.translatedText) {
-                var resText = mData.responseData.translatedText;
-                if (resText && resText.toLowerCase() !== text.toLowerCase()) {
-                    return resText;
+            var proxyUrl = "https://corsproxy.io?" + encodeURIComponent(fullGoogleUrl);
+            var pRes = await fetch(proxyUrl);
+            if (pRes.ok) {
+                var pData = await pRes.json();
+                var pOut = "";
+                if (Array.isArray(pData)) {
+                    var pBlock = pData.shift();
+                    if (Array.isArray(pBlock)) {
+                        pBlock.forEach(function(item) {
+                            if (Array.isArray(item)) {
+                                var pPiece = item.shift();
+                                if (typeof pPiece === "string") pOut += pPiece;
+                            }
+                        });
+                    }
                 }
+                if (pOut && pOut.toLowerCase() !== text.toLowerCase()) return pOut;
             }
         } catch (e2) {}
+
         return "";
     }
 
-    // বাংলা থেকে আরবী ও ইংরেজি অর্থ বের করা
+    // ১. বাংলা থেকে আরবী ও ইংরেজি অর্থ বের করা
     if (isBangla) {
         resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>আরবী অর্থ খোঁজা হচ্ছে...</span>";
         
-        // প্রথমে গুগল থেকে সরাসরি বাংলা -> আরবী ও ইংরেজি নেবে
-        var arText = await fetchGoogleDirect("bn", "ar", rawWord);
-        var enText = await fetchGoogleDirect("bn", "en", rawWord);
-
-        // গুগল কাজ না করলে ব্যাকআপ হিসেবে আগে ইংরেজি (Water/Milk) বের করে তারপর আরবী করবে
-        if (!enText) {
-            enText = await fetchMyMemory("bn", "en", rawWord);
-        }
-        if (!arText && enText) {
-            var cleanEn = enText.trim();
-            var queryEn = cleanEn.indexOf(" ") === -1 ? "The " + cleanEn.toLowerCase() : cleanEn;
-            arText = await fetchMyMemory("en", "ar", queryEn);
-        }
+        var arText = await smartTranslate("bn", "ar", rawWord);
+        var enText = await smartTranslate("bn", "en", rawWord);
 
         if (arText) {
             var html = '<div style="display: block; margin-bottom: 8px;">আরবী অর্থ: <span style="color:#d35400; font-size:28px; font-weight:bold;">' + arText + '</span></div>';
@@ -249,12 +245,12 @@ async function searchArabicWord() {
             }
             resultDiv.innerHTML = html;
         } else {
-            resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>আরবী অর্থ খুঁজে পাওয়া যায়নি, আবার চেষ্টা করুন।</span>";
+            resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি, ইন্টারনেট সংযোগ চেক করুন।</span>";
         }
         return;
     }
 
-    // নিজস্ব বিশেষ শব্দের তালিকা
+    // ২. নিজস্ব বিশেষ শব্দের তালিকা
     if (typeof customDictionary !== "undefined" && customDictionary.hasOwnProperty(rawWord)) {
         var item = customDictionary[rawWord];
         resultDiv.innerHTML = '<div style="display: block; margin-bottom: 8px;">বাংলা অর্থ: <span style="color:#d35400; font-size:26px; font-weight:bold;">' + item.bn + '</span></div>' +
@@ -263,30 +259,10 @@ async function searchArabicWord() {
         return;
     }
 
-    // আরবী থেকে বাংলা ও ইংরেজি অর্থ বের করা
+    // ৩. আরবী থেকে বাংলা ও ইংরেজি অর্থ বের করা
     resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>সঠিক অর্থ খোঁজা হচ্ছে...</span>";
-    var enFromAr = await fetchGoogleDirect("ar", "en", rawWord);
-    if (!enFromAr) {
-        enFromAr = await fetchMyMemory("ar", "en", rawWord);
-    }
-
-    var enForBangla = enFromAr;
-    if (enFromAr) {
-        var cEn = enFromAr.trim();
-        if (cEn.toLowerCase() === "books") {
-            enForBangla = "many books";
-        } else if (cEn.toLowerCase().slice(-1) === "s" && cEn.toLowerCase().slice(-2) !== "ss" && cEn.indexOf(" ") === -1) {
-            enForBangla = "multiple " + cEn;
-        }
-    }
-
-    var bnFromAr = "";
-    if (enForBangla) {
-        bnFromAr = await fetchGoogleDirect("en", "bn", enForBangla);
-        if (!bnFromAr) {
-            bnFromAr = await fetchMyMemory("en", "bn", enForBangla);
-        }
-    }
+    var bnFromAr = await smartTranslate("ar", "bn", rawWord);
+    var enFromAr = await smartTranslate("ar", "en", rawWord);
 
     if (bnFromAr) {
         var arHtml = '<div style="display: block; margin-bottom: 8px;">বাংলা অর্থ: <span style="color:#d35400; font-size:26px; font-weight:bold;">' + bnFromAr + '</span></div>';
@@ -295,10 +271,9 @@ async function searchArabicWord() {
         }
         resultDiv.innerHTML = arHtml;
     } else {
-        resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি, ইন্টারনেট চেক করুন।</span>";
+        resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি, আবার চেষ্টা করুন।</span>";
     }
 }
-
 
 // Contact সেকশন খোলা এবং বন্ধ করার ফাংশন
 function toggleContact() {
