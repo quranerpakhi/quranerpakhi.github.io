@@ -214,3 +214,54 @@ function playBeep() {
         }, 400);
     } catch (e) { alert("⏰ সময় শেষ হয়েছে!"); }
 }
+// ৪. ডোনেট (Donate) সেকশন ও পেমেন্ট ট্যাব পরিবর্তন
+function openDonateModal() {
+    var modal = document.getElementById('donate-modal');
+    if (!modal) return;
+    if (modal.style.display === 'block') {
+        modal.style.display = 'none';
+    } else {
+        closeOtherBoxes('donate-modal');
+        modal.style.display = 'block';
+        modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function closeDonateModal() {
+    var modal = document.getElementById('donate-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function switchPaymentTab(method) {
+    var isBkash = method === 'bkash';
+    var tabBkash = document.getElementById('tab-bkash');
+    var tabBank = document.getElementById('tab-bank');
+    var checkBkash = document.getElementById('check-bkash');
+    var checkBank = document.getElementById('check-bank');
+    var contentBkash = document.getElementById('content-bkash');
+    var contentBank = document.getElementById('content-bank');
+
+    if (tabBkash) tabBkash.classList.toggle('active', isBkash);
+    if (tabBank) tabBank.classList.toggle('active', !isBkash);
+    if (checkBkash) checkBkash.style.display = isBkash ? 'flex' : 'none';
+    if (checkBank) checkBank.style.display = !isBkash ? 'flex' : 'none';
+    if (contentBkash) contentBkash.style.display = isBkash ? 'block' : 'none';
+    if (contentBank) contentBank.style.display = !isBkash ? 'block' : 'none';
+}
+
+function copyText(elementId, btnElement) {
+    var el = document.getElementById(elementId);
+    if (!el) return;
+    var text = el.innerText.trim();
+    navigator.clipboard.writeText(text).then(function() {
+        var orig = btnElement.innerText;
+        btnElement.innerText = "✓ কপি হয়েছে";
+        btnElement.style.backgroundColor = "#27ae60";
+        btnElement.style.color = "#ffffff";
+        setTimeout(function() {
+            btnElement.innerText = orig;
+            btnElement.style.backgroundColor = "";
+            btnElement.style.color = "";
+        }, 2000);
+    });
+}
