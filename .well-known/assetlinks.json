@@ -1,8 +1,11 @@
 [{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "io.github.quranerpakhi.twa",
-        "sha256_cert_fingerprints": ["61:76:CB:7A:A8:44:D8:78:A6:E2:1D:AD:10:02:AC:C6:01:0D:82:F4:3F:9B:DD:0B:2F:32:74:E4:EA:E0:AE:0C"]
-      }
-    }]
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "io.github.quranerpakhi.twa",
+    "sha256_cert_fingerprints": [
+      "61:76:CB:7A:A8:44:D8:78:A6:E2:1D:AD:10:02:AC:C6:01:0D:82:F4:3F:9B:DD:0B:2F:32:74:E4:EA:E0:AE:0C",
+      "F7:4D:5C:A1:DD:B4:E4:48:6D:D2:F1:6F:92:83:94:74:82:E3:71:07:D1:95:63:83:60:D9:39:FA:33:D3:49:2E"
+    ]
+  }
+}]
