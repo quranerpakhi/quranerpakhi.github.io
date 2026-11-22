@@ -79,6 +79,68 @@ function format12Hr(t24) {
     return h + ":" + m + " " + ap;
 }
 
+// বাংলাদেশের সংশোধিত বাংলা পঞ্জিকা অনুযায়ী বাংলা তারিখ বের করার ফাংশন
+function getBanglaDateString() {
+    var today = new Date();
+    var day = today.getDate();
+    var month = today.getMonth() + 1; // 1-12
+    var year = today.getFullYear();
+
+    var isLeapYear = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+    var banglaMonths = ["বৈশাখ", "জ্যৈষ্ঠ", "আষাঢ়", "শ্রাবণ", "ভাদ্র", "আশ্বিন", "কার্তিক", "অগ্রহায়ণ", "পৌষ", "মাঘ", "ফাল্গুন", "চৈত্র"];
+    var banglaDigits = ["০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯"];
+
+    function toBnNum(num) {
+        return num.toString().split("").map(function(d) {
+            return banglaDigits.at(parseInt(d, 10)) || d;
+        }).join("");
+    }
+
+    var banglaYear = (month < 4 || (month === 4 && day < 14)) ? year - 594 : year - 593;
+    var bMonthIdx = 0;
+    var bDay = 1;
+
+    if ((month === 4 && day >= 14) || (month === 5 && day <= 14)) {
+        bMonthIdx = 0; // বৈশাখ (৩১ দিন)
+        bDay = (month === 4) ? day - 13 : day + 17;
+    } else if ((month === 5 && day >= 15) || (month === 6 && day <= 14)) {
+        bMonthIdx = 1; // জ্যৈষ্ঠ (৩১ দিন)
+        bDay = (month === 5) ? day - 14 : day + 17;
+    } else if ((month === 6 && day >= 15) || (month === 7 && day <= 15)) {
+        bMonthIdx = 2; // আষাঢ় (৩১ দিন)
+        bDay = (month === 6) ? day - 14 : day + 16;
+    } else if ((month === 7 && day >= 16) || (month === 8 && day <= 15)) {
+        bMonthIdx = 3; // শ্রাবণ (৩১ দিন)
+        bDay = (month === 7) ? day - 15 : day + 16;
+    } else if ((month === 8 && day >= 16) || (month === 9 && day <= 15)) {
+        bMonthIdx = 4; // ভাদ্র (৩১ দিন)
+        bDay = (month === 8) ? day - 15 : day + 16;
+    } else if ((month === 9 && day >= 16) || (month === 10 && day <= 16)) {
+        bMonthIdx = 5; // আশ্বিন (৩১ দিন)
+        bDay = (month === 9) ? day - 15 : day + 15;
+    } else if ((month === 10 && day >= 17) || (month === 11 && day <= 15)) {
+        bMonthIdx = 6; // কার্তিক (৩০ দিন)
+        bDay = (month === 10) ? day - 16 : day + 15;
+    } else if ((month === 11 && day >= 16) || (month === 12 && day <= 15)) {
+        bMonthIdx = 7; // অগ্রহায়ণ (৩০ দিন)
+        bDay = (month === 11) ? day - 15 : day + 15;
+    } else if ((month === 12 && day >= 16) || (month === 1 && day <= 14)) {
+        bMonthIdx = 8; // পৌষ (৩০ দিন)
+        bDay = (month === 12) ? day - 15 : day + 16;
+    } else if ((month === 1 && day >= 15) || (month === 2 && day <= 13)) {
+        bMonthIdx = 9; // মাঘ (৩০ দিন)
+        bDay = (month === 1) ? day - 14 : day + 17;
+    } else if ((month === 2 && day >= 14) || (month === 3 && day <= 14)) {
+        bMonthIdx = 10; // ফাল্গুন (২৯/৩০ দিন)
+        bDay = (month === 2) ? day - 13 : (isLeapYear ? day + 16 : day + 15);
+    } else {
+        bMonthIdx = 11; // চৈত্র (৩০ দিন)
+        bDay = (month === 3) ? day - 14 : day + 17;
+    }
+
+    return toBnNum(bDay) + " " + banglaMonths.at(bMonthIdx) + ", " + toBnNum(banglaYear) + " বঙ্গাব্দ";
+}
+
 async function loadPrayerTimes(city) {
     var box = document.getElementById('prayer-cards-container');
     var bar = document.getElementById('sehri-iftar-bar');
@@ -97,7 +159,11 @@ async function loadPrayerTimes(city) {
         if (json && json.data) {
             var t = json.data.timings;
             var d = json.data.date;
-            if (dt) dt.innerText = "📅 " + d.readable + " | 🌙 " + d.hijri.day + " " + d.hijri.month.en + ", " + d.hijri.year + " হিজরি";
+            var banglaDateText = getBanglaDateString();
+
+            if (dt) {
+                dt.innerText = "📅 " + d.readable + " | 🌙 " + d.hijri.day + " " + d.hijri.month.en + ", " + d.hijri.year + " হিজরি | 🇧🇩 " + banglaDateText;
+            }
             if (bar) {
                 bar.innerHTML = '<div class="special-time-card"><span>🌙 সেহরির শেষ সময়</span><strong>' + format12Hr(t.Imsak) + '</strong></div>' +
                                 '<div class="special-time-card"><span>🌅 সূর্যোদয়</span><strong>' + format12Hr(t.Sunrise) + '</strong></div>' +
@@ -120,6 +186,7 @@ async function loadPrayerTimes(city) {
         box.innerHTML = "<p style='text-align:center; color:red; grid-column: 1/-1;'>সময়সূচি লোড করতে সমস্যা হচ্ছে।</p>";
     }
 }
+
 
 // ৩. স্টপওয়াচ ও টাইমার বাটন
 var swMode = 'stopwatch', swRun = false, swInt = null, swMs = 0, tmMs = 0, lastTick = 0, lapNo = 0;
