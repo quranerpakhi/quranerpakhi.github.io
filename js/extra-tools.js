@@ -372,3 +372,96 @@ function copyEmail() {
         }, 2500);
     });
 }
+// ৬. আরবী ক্রিয়া রূপান্তর বা সরফ টেবিল (Qutrub + Apps Script API)
+var SARF_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwE8Sp-n0ouvw_IE3m9nnyd_wE0--NLZvZYOmuQ21X7wOtx8nKsJKwhqTXodQEunV0O/exec";
+var currentSarfData = null;
+
+function toggleSarf() {
+    var sarf = document.getElementById('sarf-section');
+    if (!sarf) return;
+    if (sarf.style.display === 'block') {
+        sarf.style.display = 'none';
+    } else {
+        closeOtherBoxes('sarf-section');
+        sarf.style.display = 'block';
+        sarf.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (!currentSarfData) {
+            quickSarf('كَتَبَ');
+        }
+    }
+}
+
+function quickSarf(verb) {
+    document.getElementById('sarf-root-input').value = verb;
+    fetchSarfTable();
+}
+
+async function fetchSarfTable() {
+    var verb = document.getElementById('sarf-root-input').value.trim();
+    var area = document.getElementById('sarf-result-area');
+    if (!verb) return;
+
+    area.innerHTML = "<p style='text-align:center; color:#8e44ad; font-size:17px;'>⏳ বাব শনাক্ত করা হচ্ছে এবং সকল সিগাহ তৈরি হচ্ছে...</p>";
+
+    try {
+        var reqUrl = SARF_SCRIPT_URL + "?action=sarf&q=" + encodeURIComponent(verb);
+        var res = await fetch(reqUrl);
+        var data = await res.json();
+
+        if (data && data.rows && data.rows.length > 0) {
+            currentSarfData = data;
+            renderSarfTabs('madi-mudari');
+        } else {
+            area.innerHTML = "<p style='color:red;'>ক্রিয়াপদটি বিশ্লেষণ করা যায়নি, আবার চেষ্টা করুন।</p>";
+        }
+    } catch (err) {
+        area.innerHTML = "<p style='color:red;'>সার্ভারের সাথে সংযোগ হতে সমস্যা হচ্ছে, ইন্টারনেট চেক করুন।</p>";
+    }
+}
+
+function renderSarfTabs(activeTab) {
+    var area = document.getElementById('sarf-result-area');
+    var d = currentSarfData;
+    if (!d) return;
+
+    var html = '<div class="sarf-meta-banner">' +
+        '<strong>মূল ক্রিয়া:</strong> <span class="sarf-ar" style="font-size:22px;">' + d.verb + '</span> &nbsp;|&nbsp; ' +
+        '<strong>অর্থ:</strong> ' + d.baseMeaningBn + ' &nbsp;|&nbsp; ' +
+        '<strong>শনাক্তকৃত বাব:</strong> ' + d.baabName +
+        '</div>';
+
+    // ৪টি পরিচ্ছন্ন ট্যাব বাটন
+    html += '<div class="sarf-tabs">' +
+        '<button class="sarf-tab-btn ' + (activeTab === 'madi-mudari' ? 'active' : '') + '" onclick="renderSarfTabs(\'madi-mudari\')">মাদি ও মুদারে (অতীত ও বর্তমান)</button>' +
+        '<button class="sarf-tab-btn ' + (activeTab === 'amr' ? 'active' : '') + '" onclick="renderSarfTabs(\'amr\')">আমর (আদেশসূচক ক্রিয়া)</button>' +
+        '<button class="sarf-tab-btn ' + (activeTab === 'nahi' ? 'active' : '') + '" onclick="renderSarfTabs(\'nahi\')">নাহি (নিষেধসূচক ক্রিয়া)</button>' +
+        '<button class="sarf-tab-btn ' + (activeTab === 'majhul' ? 'active' : '') + '" onclick="renderSarfTabs(\'majhul\')">মাজহুল (কর্মবাচ্য)</button>' +
+        '</div>';
+
+    html += '<div class="sarf-table-wrapper"><table class="sarf-table">';
+
+    if (activeTab === 'madi-mudari') {
+        html += '<thead><tr><th>সিগাহ (ব্যাকরণগত রূপ)</th><th>মাদি (অতীত কাল)</th><th>মুদারে (বর্তমান/ভবিষ্যৎ)</th><th>নির্দিষ্ট বাংলা অর্থ</th></tr></thead><tbody>';
+        d.rows.forEach(function(r) {
+            html += '<tr><td><strong>' + r.sigah + '</strong></td><td class="sarf-ar">' + r.madi + '</td><td class="sarf-ar">' + r.mudari + '</td><td>' + r.bnMeaning + '</td></tr>';
+        });
+    } else if (activeTab === 'amr') {
+        html += '<thead><tr><th>হাজির সিগাহ (আদেশ)</th><th>আমর (আদেশসূচক ক্রিয়া)</th></tr></thead><tbody>';
+        (d.amr || []).forEach(function(a) {
+            html += '<tr><td><strong>' + a.sigah + '</strong></td><td class="sarf-ar" style="color:#b7950b;">' + a.word + '</td></tr>';
+        });
+    } else if (activeTab === 'nahi') {
+        html += '<thead><tr><th>সিগাহ (ব্যাকরণগত রূপ)</th><th>নাহি (নিষেধসূচক ক্রিয়া)</th><th>নির্দিষ্ট বাংলা অর্থ</th></tr></thead><tbody>';
+        d.rows.forEach(function(r) {
+            html += '<tr><td><strong>' + r.sigah + '</strong></td><td class="sarf-ar" style="color:#c0392b;">' + r.nahi + '</td><td>' + r.bnMeaning + ' (না করা)</td></tr>';
+        });
+    } else if (activeTab === 'majhul') {
+        html += '<thead><tr><th>সিগাহ (ব্যাকরণগত রূপ)</th><th>মাদি মাজহুল (অতীত কর্মবাচ্য)</th><th>মুদারে মাজহুল (বর্তমান কর্মবাচ্য)</th></tr></thead><tbody>';
+        d.rows.forEach(function(r) {
+            html += '<tr><td><strong>' + r.sigah + '</strong></td><td class="sarf-ar" style="color:#1e8449;">' + r.madiMajhul + '</td><td class="sarf-ar" style="color:#1e8449;">' + r.mudariMajhul + '</td></tr>';
+        });
+    }
+
+    html += '</tbody></table></div>';
+    area.innerHTML = html;
+}
