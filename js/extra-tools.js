@@ -449,13 +449,12 @@ function renderSarfTabs(activeTab) {
         '</tr></thead><tbody>';
 
         d.rows.forEach(function(r) {
-            var mudariCleanBn = (r.mudariBn || "").replace(" / ভবিষ্যতে করবে", " / লিখবে বা করবে");
             html += '<tr>' +
                 '<td><strong>' + r.sigah + '</strong></td>' +
                 '<td class="sarf-ar">' + r.madi + '</td>' +
                 '<td style="color:#2c3e50; font-weight:500;">' + r.madiBn + '</td>' +
                 '<td class="sarf-ar">' + r.mudari + '</td>' +
-                '<td style="color:#1e8449; font-weight:500;">' + (r.mudariBn || "").replace(" / ভবিষ্যতে করবে", " / ভবিষ্যতে") + '</td>' +
+               '<td style="color:#1e8449; font-weight:500;">' + r.mudariBn + '</td>' +
             '</tr>';
         });
     } else if (activeTab === 'amr') {
