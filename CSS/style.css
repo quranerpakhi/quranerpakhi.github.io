@@ -995,3 +995,137 @@ nav a, .nav-links a, header nav a {
         font-size: 15px !important;
     }
 }
+/* ক্রিয়া রূপান্তর (Sarf Table) ডিজাইন */
+.opt-btn.sarf { border-left: 5px solid #8e44ad; }
+
+.sarf-search-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    max-width: 600px;
+    margin: 0 auto 14px auto;
+}
+
+.sarf-search-row input {
+    padding: 12px 18px;
+    font-size: 22px;
+    font-weight: bold;
+    border-radius: 8px;
+    border: 2px solid #8e44ad;
+    width: 260px;
+    text-align: center;
+    outline: none;
+}
+
+.sarf-go-btn {
+    background-color: #8e44ad;
+    color: #ffffff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.sarf-go-btn:hover { background-color: #732d91; }
+
+.sarf-quick-chips {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.sarf-quick-chips button {
+    background: #f4ecf7;
+    color: #6c3483;
+    border: 1px solid #d2b4de;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.sarf-quick-chips button:hover {
+    background: #8e44ad;
+    color: #ffffff;
+}
+
+.sarf-meta-banner {
+    background: #f4ecf7;
+    border-left: 4px solid #8e44ad;
+    padding: 12px 16px;
+    border-radius: 8px;
+    max-width: 850px;
+    margin: 0 auto 15px auto;
+    font-size: 16px;
+    color: #4a235a;
+}
+
+.sarf-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.sarf-tab-btn {
+    background: #f0f0f0;
+    color: #333333;
+    border: 1px solid #cccccc;
+    padding: 9px 16px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.sarf-tab-btn.active {
+    background: #8e44ad;
+    color: #ffffff;
+    border-color: #8e44ad;
+}
+
+.sarf-table-wrapper {
+    overflow-x: auto;
+    max-width: 900px;
+    margin: 0 auto;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+}
+
+.sarf-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+    text-align: center;
+}
+
+.sarf-table th {
+    background-color: #8e44ad;
+    color: #ffffff;
+    padding: 12px 10px;
+    font-size: 15px;
+}
+
+.sarf-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #eeeeee;
+    font-size: 15px;
+    color: #333333;
+}
+
+.sarf-table tr:nth-child(even) { background-color: #faf5fc; }
+
+.sarf-ar {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2c3e50;
+    font-family: 'Amiri', 'Traditional Arabic', sans-serif;
+}
