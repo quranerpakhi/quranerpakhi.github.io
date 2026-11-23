@@ -52,6 +52,7 @@
             <a href="#qa-section" onclick="toggleQA()" class="opt-btn qa">প্রশ্ন ও উত্তর (Q&A)</a>
             <a href="#prayer-section" onclick="togglePrayerTimes()" class="opt-btn prayer">নামাজের সময়সূচি (Prayer Times)</a>
             <a href="#stopwatch-section" onclick="toggleStopwatch()" class="opt-btn stopwatch">স্টপওয়াচ ও টাইমার (Stopwatch)</a>
+            <a href="#sarf-section" onclick="toggleSarf()" class="opt-btn sarf">ক্রিয়া রূপান্তর (Sarf Table)</a>
 
 
         </div>
@@ -182,6 +183,30 @@
             <!-- ল্যাপ (Lap) তালিকা -->
             <div id="sw-laps-list" class="sw-laps-container"></div>
         </div>
+    </section>
+    
+    <!-- ক্রিয়া রূপান্তর বা সরফ টেবিল (Sarf Table) সেকশন -->
+    <section id="sarf-section" class="dictionary-container" style="display: none;">
+        <h2>🔄 আরবী ক্রিয়া রূপান্তর (Sarf Table)</h2>
+        <p>৩, ৪, ৫ বা ৬ অক্ষরের যেকোনো আরবী ক্রিয়াপদ লিখুন—স্বয়ংক্রিয়ভাবে সব সিগাহ ও অর্থ চলে আসবে</p>
+        
+        <div class="sarf-search-row">
+            <input type="text" id="sarf-root-input" placeholder="যেমন: كَتَبَ , أَسْلَمَ , تَعَلَّمَ , اِسْتَغْفَرَ" dir="rtl" onkeypress="if(event.key==='Enter') fetchSarfTable()">
+            <button onclick="fetchSarfTable()" class="sarf-go-btn">রূপান্তর দেখুন</button>
+        </div>
+
+        <!-- দ্রুত পরীক্ষার জন্য ৩, ৪, ৫ ও ৬ অক্ষরের নমুনা বাটন -->
+        <div class="sarf-quick-chips">
+            <button onclick="quickSarf('كَتَبَ')">كَتَبَ (৩ অক্ষর)</button>
+            <button onclick="quickSarf('عَلِمَ')">عَلِمَ (৩ অক্ষর)</button>
+            <button onclick="quickSarf('أَكْرَمَ')">أَكْرَمَ (৪ অক্ষর)</button>
+            <button onclick="quickSarf('عَلَّمَ')">عَلَّمَ (৪ অক্ষর)</button>
+            <button onclick="quickSarf('تَعَلَّمَ')">تَعَلَّمَ (৫ অক্ষর)</button>
+            <button onclick="quickSarf('اِسْتَغْفَرَ')">اِسْتَغْفَرَ (৬ অক্ষর)</button>
+        </div>
+
+        <!-- ফলাফল ও ট্যাব কন্টেইনার -->
+        <div id="sarf-result-area" style="margin-top: 20px;"></div>
     </section>
 
     <!-- সার্ভিস/নোট সেকশন -->
