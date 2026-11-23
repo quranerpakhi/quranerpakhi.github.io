@@ -424,9 +424,13 @@ function renderSarfTabs(activeTab) {
     var d = currentSarfData;
     if (!d) return;
 
+    // মূল ক্রিয়ার অর্থ পরিষ্কার করা (যেন 'বই' না দেখিয়ে ক্রিয়াপদের সঠিক অর্থ দেখায়)
+    var firstRowMeaning = (d.rows && d.rows.at(0) && d.rows.at(0).bnMeaning) ? d.rows.at(0).bnMeaning : d.baseMeaningBn;
+    var cleanVerbAction = firstRowMeaning.replace(/^(সে|তিনি)\s+/g, "").trim();
+
     var html = '<div class="sarf-meta-banner">' +
         '<strong>মূল ক্রিয়া:</strong> <span class="sarf-ar" style="font-size:22px;">' + d.verb + '</span> &nbsp;|&nbsp; ' +
-        '<strong>অর্থ:</strong> ' + d.baseMeaningBn + ' &nbsp;|&nbsp; ' +
+        '<strong>অর্থ:</strong> ' + cleanVerbAction + ' &nbsp;|&nbsp; ' +
         '<strong>শনাক্তকৃত বাব:</strong> ' + d.baabName +
         '</div>';
 
@@ -446,9 +450,9 @@ function renderSarfTabs(activeTab) {
             html += '<tr><td><strong>' + r.sigah + '</strong></td><td class="sarf-ar">' + r.madi + '</td><td class="sarf-ar">' + r.mudari + '</td><td>' + r.bnMeaning + '</td></tr>';
         });
     } else if (activeTab === 'amr') {
-        html += '<thead><tr><th>হাজির সিগাহ (আদেশ)</th><th>আমর (আদেশসূচক ক্রিয়া)</th></tr></thead><tbody>';
+        html += '<thead><tr><th>হাজির সিগাহ (আদেশ)</th><th>আমর (আদেশসূচক ক্রিয়া)</th><th>নির্দিষ্ট বাংলা অর্থ</th></tr></thead><tbody>';
         (d.amr || []).forEach(function(a) {
-            html += '<tr><td><strong>' + a.sigah + '</strong></td><td class="sarf-ar" style="color:#b7950b;">' + a.word + '</td></tr>';
+            html += '<tr><td><strong>' + a.sigah + '</strong></td><td class="sarf-ar" style="color:#b7950b;">' + a.word + '</td><td>' + a.sigah + ' (' + cleanVerbAction + ')</td></tr>';
         });
     } else if (activeTab === 'nahi') {
         html += '<thead><tr><th>সিগাহ (ব্যাকরণগত রূপ)</th><th>নাহি (নিষেধসূচক ক্রিয়া)</th><th>নির্দিষ্ট বাংলা অর্থ</th></tr></thead><tbody>';
@@ -456,9 +460,34 @@ function renderSarfTabs(activeTab) {
             html += '<tr><td><strong>' + r.sigah + '</strong></td><td class="sarf-ar" style="color:#c0392b;">' + r.nahi + '</td><td>' + r.bnMeaning + ' (না করা)</td></tr>';
         });
     } else if (activeTab === 'majhul') {
-        html += '<thead><tr><th>সিগাহ (ব্যাকরণগত রূপ)</th><th>মাদি মাজহুল (অতীত কর্মবাচ্য)</th><th>মুদারে মাজহুল (বর্তমান কর্মবাচ্য)</th></tr></thead><tbody>';
-        d.rows.forEach(function(r) {
-            html += '<tr><td><strong>' + r.sigah + '</strong></td><td class="sarf-ar" style="color:#1e8449;">' + r.madiMajhul + '</td><td class="sarf-ar" style="color:#1e8449;">' + r.mudariMajhul + '</td></tr>';
+        // মাজহুল (কর্মবাচ্য) ১৪টি সিগাহর জন্য নির্দিষ্ট কর্মবাচ্য বাংলা সর্বনাম
+        var majhulSubjects = [
+            "তাকে (পুং)",
+            "তাদের দুজনকে (পুং)",
+            "তাদের সকলকে (পুং)",
+            "তাকে (স্ত্রী)",
+            "তাদের দুজনকে (স্ত্রী)",
+            "তাদের সকলকে (স্ত্রী)",
+            "তোমাকে (পুং)",
+            "তোমাদের দুজনকে (পুং)",
+            "তোমাদের সকলকে (পুং)",
+            "তোমাকে (স্ত্রী)",
+            "তোমাদের দুজনকে (স্ত্রী)",
+            "তোমাদের সকলকে (স্ত্রী)",
+            "আমাকে",
+            "আমাদেরকে"
+        ];
+
+        html += '<thead><tr><th>সিগাহ (ব্যাকরণগত রূপ)</th><th>মাদি মাজহুল (অতীত কর্মবাচ্য)</th><th>মুদারে মাজহুল (বর্তমান কর্মবাচ্য)</th><th>কর্মবাচ্য বাংলা অর্থ</th></tr></thead><tbody>';
+        d.rows.forEach(function(r, idx) {
+            var sub = majhulSubjects.at(idx) || "";
+            var passiveMeaning = sub + " " + cleanVerbAction + " হয়েছে / হচ্ছে";
+            html += '<tr>' +
+                '<td><strong>' + r.sigah + '</strong></td>' +
+                '<td class="sarf-ar" style="color:#1e8449;">' + r.madiMajhul + '</td>' +
+                '<td class="sarf-ar" style="color:#1e8449;">' + r.mudariMajhul + '</td>' +
+                '<td>' + passiveMeaning + '</td>' +
+            '</tr>';
         });
     }
 
