@@ -1129,3 +1129,162 @@ nav a, .nav-links a, header nav a {
     color: #2c3e50;
     font-family: 'Amiri', 'Traditional Arabic', sans-serif;
 }
+/* মডার্ন মিনিমালিস্ট কিবলা কম্পাস ডিজাইন */
+.opt-btn.qibla { border-left: 5px solid #008080; }
+
+.qibla-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 420px;
+    margin: 15px auto 0 auto;
+}
+
+.qibla-badge {
+    background: #f0f7f7;
+    color: #006666;
+    border: 1px solid #b2d8d8;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    transition: all 0.3s ease;
+}
+
+.qibla-badge.aligned {
+    background: #27ae60;
+    color: #ffffff;
+    border-color: #27ae60;
+    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+}
+
+.qibla-top-marker {
+    font-size: 20px;
+    color: #008080;
+    margin-bottom: 4px;
+    font-weight: bold;
+}
+
+.compass-outer-ring {
+    width: 270px;
+    height: 270px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 8px solid #008080;
+    box-shadow: 0 10px 30px rgba(0, 128, 128, 0.15), inset 0 0 15px rgba(0,0,0,0.04);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.compass-outer-ring.aligned {
+    border-color: #27ae60;
+    box-shadow: 0 0 28px rgba(39, 174, 96, 0.45), inset 0 0 15px rgba(39, 174, 96, 0.1);
+}
+
+.compass-dial {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    position: relative;
+    transition: transform 0.15s ease-out;
+}
+
+.dir-mark {
+    position: absolute;
+    font-weight: 800;
+    font-size: 16px;
+    color: #555555;
+}
+
+.dir-n { top: 10px; left: 50%; transform: translateX(-50%); color: #e74c3c; }
+.dir-s { bottom: 10px; left: 50%; transform: translateX(-50%); }
+.dir-e { right: 12px; top: 50%; transform: translateY(-50%); }
+.dir-w { left: 12px; top: 50%; transform: translateY(-50%); }
+
+.qibla-pointer-arm {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 40px;
+    height: 50%;
+    margin-left: -20px;
+    transform-origin: bottom center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 26px;
+}
+
+.kaaba-icon-box {
+    font-size: 28px;
+    line-height: 1;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+.pointer-line {
+    width: 4px;
+    flex-grow: 1;
+    background: linear-gradient(to bottom, #008080, #80cbc4);
+    border-radius: 4px;
+    margin-top: 4px;
+}
+
+.compass-center-dot {
+    width: 16px;
+    height: 16px;
+    background: #008080;
+    border: 3px solid #ffffff;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.qibla-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.qibla-info-box {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.qibla-info-box span {
+    display: block;
+    font-size: 13px;
+    color: #666666;
+    margin-bottom: 4px;
+}
+
+.qibla-info-box strong {
+    font-size: 16px;
+    color: #008080;
+}
+
+.qibla-action-btn {
+    margin-top: 15px;
+    background: #008080;
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.qibla-action-btn:hover { background: #006666; }
