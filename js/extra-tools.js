@@ -723,15 +723,17 @@ async function initLiveQuizGate() {
             var optD = r.at(5) || "";
             var ans = (r.at(6) || "").toUpperCase();
             var exp = r.at(7) || "";
+            var isActive = (r.at(8) || "").trim().toUpperCase();
 
-            if (q && optA && optB && ans) {
+            // শুধুমাত্র I কলামে 'YES' লেখা প্রশ্নগুলোই লাইভ কুইজে নেওয়া হবে
+            if (q && optA && optB && ans && isActive === "YES") {
                 allQuizBank.push({ category: cat, question: q, options: { A: optA, B: optB, C: optC, D: optD }, answer: ans, explanation: exp });
                 if (categories.indexOf(cat) === -1) categories.push(cat);
             }
         });
 
         if (allQuizBank.length === 0) {
-            box.innerHTML = "<p style='text-align:center; color:red;'>গুগল শিটে এখনো কোনো প্রশ্ন যোগ করা হয়নি।</p>";
+            box.innerHTML = "<p style='text-align:center; color:#e67e22; font-weight:bold;'>বর্তমানে কোনো প্রশ্ন সক্রিয় (YES) করা নেই।</p>";
             return;
         }
 
@@ -756,6 +758,7 @@ async function initLiveQuizGate() {
         box.innerHTML = "<p style='text-align:center; color:red;'>কুইজ লোড করতে সমস্যা হচ্ছে, ইন্টারনেট সংযোগ চেক করুন।</p>";
     }
 }
+
 
 
 function startLiveQuiz(questionLimit) {
