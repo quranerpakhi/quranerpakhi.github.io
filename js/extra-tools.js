@@ -785,15 +785,18 @@ function startLiveQuiz(questionLimit) {
 
 function renderActiveQuizQuestions() {
     var box = document.getElementById('quiz-main-container');
-    var html = '<div class="quiz-sticky-bar">' +
-        '<span>👤 ' + quizStudentName + ' (' + (quizSelectedCategory === "ALL" ? "সকল বিষয়" : quizSelectedCategory) + ')</span>' +
-        '<span class="quiz-timer-badge" id="quiz-timer-display">⏱️ 05:00</span>' +
-    '</div>';
+    
+    // স্ক্রল করলেও টাইমার যেন সবসময় স্ক্রিনের ওপরে স্থির থাকে (Fixed Floating Bar)
+    var html = '<div id="quiz-floating-timer" style="position: fixed; top: 12px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 720px; z-index: 9999; background: #2c3e50; color: #ffffff; padding: 12px 18px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 6px 20px rgba(0,0,0,0.25); font-weight: bold;">' +
+        '<span style="font-size: 15px;">👤 ' + quizStudentName + ' (' + (quizSelectedCategory === "ALL" ? "সকল বিষয়" : quizSelectedCategory) + ')</span>' +
+        '<span class="quiz-timer-badge" id="quiz-timer-display" style="background: #e74c3c; color: #ffffff; padding: 5px 14px; border-radius: 20px; font-size: 16px;">⏱️ 05:00</span>' +
+    '</div>' +
+    '<div style="height: 55px;"></div>';
 
     activeQuizQuestions.forEach(function(qObj, idx) {
-        html += '<div class="quiz-q-card" id="q-card-' + idx + '">' +
-            '<div class="quiz-q-title">' + (idx + 1) + '. ' + qObj.question + '</div>' +
-            '<div class="quiz-opt-list">';
+        html += '<div class="quiz-q-card" id="q-card-' + idx + '" style="background:#ffffff; border:1px solid #e0e0e0; border-radius:10px; padding:18px; margin-bottom:16px; text-align:left; box-shadow:0 2px 8px rgba(0,0,0,0.03);">' +
+            '<div class="quiz-q-title" style="font-size:18px; font-weight:bold; color:#2c3e50; margin-bottom:12px;">' + (idx + 1) + '. ' + qObj.question + '</div>' +
+            '<div class="quiz-opt-list" style="display:flex; flex-direction:column; gap:8px;">';
 
         ["A", "B", "C", "D"].forEach(function(optKey) {
             if (qObj.options[optKey]) {
@@ -807,7 +810,7 @@ function renderActiveQuizQuestions() {
     });
 
     html += '<div style="text-align:center; margin: 20px 0;">' +
-        '<button onclick="finishAndGradeQuiz(false)" class="quiz-start-btn" style="background:#27ae60; font-size:18px;">✓ কুইজ জমা দিন (Submit)</button>' +
+        '<button onclick="finishAndGradeQuiz(false)" class="quiz-start-btn" style="background:#27ae60; color:#ffffff; border:none; padding:13px 28px; border-radius:8px; font-size:18px; font-weight:bold; cursor:pointer;">✓ কুইজ জমা দিন (Submit)</button>' +
     '</div>';
 
     box.innerHTML = html;
@@ -823,7 +826,7 @@ function selectAndLockOption(qIndex, chosenOpt) {
     ["A", "B", "C", "D"].forEach(function(key) {
         var btn = document.getElementById("opt-" + qIndex + "-" + key);
         if (btn) {
-            btn.disabled = true; // প্রশ্নটি লক হয়ে গেল
+            btn.disabled = true;
             if (key === chosenOpt) {
                 btn.classList.add("silent-selected");
             }
@@ -838,7 +841,7 @@ function startQuizCountdown() {
         updateQuizTimerUI();
         if (quizSecondsLeft <= 0) {
             clearInterval(quizTimerInterval);
-            finishAndGradeQuiz(true); // সময় শেষ হলে অটো লক ও সাবমিট
+            finishAndGradeQuiz(true);
         }
     }, 1000);
 }
@@ -849,6 +852,19 @@ function updateQuizTimerUI() {
     var mins = Math.floor(quizSecondsLeft / 60);
     var secs = quizSecondsLeft % 60;
     el.innerText = "⏱️ " + (mins < 10 ? "0" + mins : mins) + ":" + (secs < 10 ? "0" + secs : secs);
+}
+
+// হোয়াটসঅ্যাপ গ্রুপে সরাসরি ফলাফল শেয়ার করার ফাংশন
+function shareQuizOnWhatsApp(studentName, score, total, percent, category) {
+    var catName = (category === "ALL") ? "সকল বিষয়" : category;
+    var shareMsg = "🕌 *কুরআনের পাখি — লাইভ কুইজ ফলাফল*\n\n" +
+        "👤 *শিক্ষার্থীর নাম:* " + studentName + "\n" +
+        "📚 *বিষয়:* " + catName + "\n" +
+        "🏆 *প্রাপ্ত স্কোর:* " + score + " / " + total + " (" + percent + "%)\n\n" +
+        "আপনিও আরবী ভাষা শিখতে ও কুইজে অংশ নিতে ভিজিট করুন:\nhttps://github.io";
+
+    var waUrl = "https://whatsapp.com" + encodeURIComponent(shareMsg);
+    window.open(waUrl, "_blank");
 }
 
 // কুইজ শেষে অভিনন্দন কার্ড এবং সবুজ-লাল রঙ ও ব্যাখ্যাসহ রিভিউ
@@ -868,6 +884,8 @@ function finishAndGradeQuiz(isTimeUp) {
 
     var percent = Math.round((score / total) * 100);
     var greetingTitle = percent >= 80 ? "মাশাআল্লাহ, অসাধারণ ফলাফল!" : (percent >= 50 ? "আলহামদুলিল্লাহ, ভালো চেষ্টা!" : "বারাকাল্লাহু ফীক, আরও অনুশীলন করুন!");
+    var safeName = quizStudentName.replace(/'/g, "");
+    var safeCat = quizSelectedCategory.replace(/'/g, "");
 
     var box = document.getElementById('quiz-main-container');
     var html = "";
@@ -876,14 +894,16 @@ function finishAndGradeQuiz(isTimeUp) {
         html += '<div style="background:#fadbd8; color:#78281f; padding:12px; border-radius:8px; margin-bottom:15px; font-weight:bold; text-align:center;">⏰ নির্ধারিত সময় শেষ হয়ে গেছে! আপনার উত্তরগুলো স্বয়ংক্রিয়ভাবে লক ও জমা নেওয়া হয়েছে।</div>';
     }
 
-    // হোয়াটসঅ্যাপে স্ক্রিনশট শেয়ার করার উপযোগী অভিনন্দন কার্ড
+    // অভিনন্দন কার্ড + সরাসরি হোয়াটসঅ্যাপ শেয়ার বাটন
     html += '<div class="congrats-card" style="background: linear-gradient(135deg, #008080, #16a085); color: #ffffff; border-radius: 16px; padding: 28px 20px; text-align: center; margin-bottom: 24px; box-shadow: 0 10px 25px rgba(0, 128, 128, 0.25); border: 4px solid #f1c40f;">' +
         '<div style="font-size:15px; opacity:0.95; margin-bottom:6px;">🕌 কুরআনের পাখি — লাইভ কুইজ ফলাফল</div>' +
         '<h3 style="font-size:24px; margin:8px 0; color:#ffffff;">' + greetingTitle + '</h3>' +
         '<p style="font-size:20px; margin:8px 0; color:#ffffff;"><strong>' + quizStudentName + '</strong>! আপনার স্কোর</p>' +
         '<div class="congrats-score-circle" style="background:#ffffff; color:#008080; display:inline-block; padding:12px 28px; border-radius:30px; font-size:26px; font-weight:800; margin:12px 0; box-shadow:0 4px 10px rgba(0,0,0,0.15);">' + score + ' / ' + total + ' (' + percent + '%)</div>' +
         '<div style="font-size:15px; margin-top:8px; color:#ffffff;">বিষয়: ' + (quizSelectedCategory === "ALL" ? "সকল বিষয়" : quizSelectedCategory) + '</div>' +
-        '<div style="font-size:13px; margin-top:12px; background:rgba(0,0,0,0.18); color:#ffffff; display:inline-block; padding:6px 14px; border-radius:15px;">📸 এই কার্ডটির স্ক্রিনশট নিয়ে হোয়াটসঅ্যাপ গ্রুপে শেয়ার করুন</div>' +
+        '<div style="margin-top:16px;">' +
+            '<button onclick="shareQuizOnWhatsApp(\'' + safeName + '\', ' + score + ', ' + total + ', ' + percent + ', \'' + safeCat + '\')" style="background:#25D366; color:#ffffff; border:2px solid #ffffff; padding:10px 20px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.2);">📤 হোয়াটসঅ্যাপ গ্রুপে শেয়ার করুন</button>' +
+        '</div>' +
     '</div>';
 
     html += '<h3 style="text-align:left; color:#2c3e50; margin-bottom:14px; font-size:19px;">📋 উত্তরপত্র ও ব্যাখ্যা (Review):</h3>';
