@@ -1,6 +1,6 @@
 // খোলা সেকশন বন্ধ করার সহায়ক ফাংশন
 function closeOtherBoxes(keepId) {
-    var ids = ['donate-modal', 'notes', 'dictionary-section', 'quran-section', 'dua-section', 'qa-section', 'about-section', 'contact-section', 'prayer-section', 'stopwatch-section', 'qibla-section'];
+    var ids = ['donate-modal', 'notes', 'dictionary-section', 'quran-section', 'dua-section', 'qa-section', 'about-section', 'contact-section', 'prayer-section', 'stopwatch-section', 'qibla-section', 'quiz-section'];
     ids.forEach(function(id) {
         if (id !== keepId) {
             var el = document.getElementById(id);
@@ -614,7 +614,299 @@ function handleOrientation(event) {
         if (badge) {
             badge.classList.remove('aligned');
             badge.innerText = "ফোনটি ঘুরিয়ে কাবা আইকনকে ওপরের তীরের সাথে মেলান";
+            
         }
         qiblaVibrated = false;
+
+        
     }
+}
+// ৮. লাইভ এমসিকিউ কুইজ (Google Sheet নিয়ন্ত্রিত)
+var QUIZ_QUESTIONS_CSV = "https://google.com";
+var QUIZ_CONTROL_CSV = "https://google.com";
+
+var allQuizBank = [];
+var activeQuizQuestions = [];
+var userQuizAnswers = {};
+var quizTimerInterval = null;
+var quizSecondsLeft = 0;
+var quizStudentName = "";
+var quizSelectedCategory = "";
+var quizIsSubmitted = false;
+
+function toggleQuiz() {
+    var sec = document.getElementById('quiz-section');
+    if (!sec) return;
+    if (sec.style.display === 'block') {
+        sec.style.display = 'none';
+    } else {
+        closeOtherBoxes('quiz-section');
+        sec.style.display = 'block';
+        sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        initLiveQuizGate();
+    }
+}
+
+function parseCsvRows(csvText) {
+    var lines = csvText.split(/\r?\n/);
+    var result = [];
+    lines.forEach(function(line) {
+        if (!line.trim()) return;
+        var cols = [];
+        var cur = "";
+        var inQ = false;
+        for (var i = 0; i < line.length; i++) {
+            var ch = line.charAt(i);
+            if (ch === '"') { inQ = !inQ; }
+            else if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ""; }
+            else { cur += ch; }
+        }
+        cols.push(cur.trim());
+        result.push(cols);
+    });
+    return result;
+}
+
+async function initLiveQuizGate() {
+    var box = document.getElementById('quiz-main-container');
+    if (!box) return;
+    clearInterval(quizTimerInterval);
+    box.innerHTML = "<p style='text-align:center; color:#e67e22; font-size:17px;'>⏳ লাইভ কুইজের অবস্থা যাচাই করা হচ্ছে...</p>";
+
+    try {
+        // ক্যাশ এড়াতে টাইমস্ট্যাম্প যোগ করা হলো যাতে ON/OFF সাথে সাথে কাজ করে
+        var ctrlRes = await fetch(QUIZ_CONTROL_CSV + "&t=" + Date.now());
+        var ctrlText = await ctrlRes.text();
+        var ctrlRows = parseCsvRows(ctrlText);
+
+        var quizStatus = "OFF";
+        var questionLimit = 10;
+
+        ctrlRows.forEach(function(r) {
+            var key = (r.at(0) || "").toLowerCase();
+            var val = (r.at(1) || "").trim();
+            if (key === "status") quizStatus = val.toUpperCase();
+            if (key === "questioncount") questionLimit = parseInt(val, 10) || 10;
+        });
+
+        // ক্লাস শুরু না হলে বা কুইজ OFF থাকলে লুকানো মেসেজ দেখাবে
+        if (quizStatus !== "ON") {
+            box.innerHTML = '<div class="quiz-setup-card">' +
+                '<div style="font-size:42px; margin-bottom:10px;">⏳</div>' +
+                '<h3 style="color:#2c3e50; margin-bottom:8px;">পরবর্তী লাইভ কুইজ এখনো শুরু হয়নি</h3>' +
+                '<p style="color:#666666;">উস্তাদ/শিক্ষক ক্লাস চলাকালীন কুইজ চালু করলে এখানে পরীক্ষার প্রশ্ন চলে আসবে।</p>' +
+                '<button onclick="initLiveQuizGate()" class="quiz-start-btn" style="margin-top:14px; background:#008080;">🔄 পুনরায় চেক করুন</button>' +
+            '</div>';
+            return;
+        }
+
+        // প্রশ্ন লোড করা
+        var qRes = await fetch(QUIZ_QUESTIONS_CSV + "&t=" + Date.now());
+        var qText = await qRes.text();
+        var qRows = parseCsvRows(qText).slice(1);
+
+        allQuizBank = [];
+        var categories = [];
+
+        qRows.forEach(function(r) {
+            var cat = r.at(0) || "সাধারণ";
+            var q = r.at(1) || "";
+            var optA = r.at(2) || "";
+            var optB = r.at(3) || "";
+            var optC = r.at(4) || "";
+            var optD = r.at(5) || "";
+            var ans = (r.at(6) || "").toUpperCase();
+            var exp = r.at(7) || "";
+
+            if (q && optA && optB && ans) {
+                allQuizBank.push({ category: cat, question: q, options: { A: optA, B: optB, C: optC, D: optD }, answer: ans, explanation: exp });
+                if (categories.indexOf(cat) === -1) categories.push(cat);
+            }
+        });
+
+        if (allQuizBank.length === 0) {
+            box.innerHTML = "<p style='text-align:center; color:red;'>গুগল শিটে এখনো কোনো প্রশ্ন যোগ করা হয়নি।</p>";
+            return;
+        }
+
+        var totalMinutes = Math.ceil((questionLimit * 30) / 60);
+        var catOptionsHtml = '<option value="ALL">সকল বিষয় মিলিয়ে (Mix Quiz)</option>';
+        categories.forEach(function(c) {
+            catOptionsHtml += '<option value="' + c + '">' + c + '</option>';
+        });
+
+        box.innerHTML = '<div class="quiz-setup-card">' +
+            '<span style="background:#d4efdf; color:#1e8449; padding:5px 14px; border-radius:20px; font-weight:bold; font-size:14px;">🟢 লাইভ কুইজ এখন চলছে!</span>' +
+            '<h3 style="margin-top:12px; color:#2c3e50;">পরীক্ষার নিয়মাবলি</h3>' +
+            '<p style="color:#555; font-size:15px;">মোট প্রশ্ন: <strong>' + questionLimit + 'টি</strong> | মোট সময়: <strong>' + totalMinutes + ' মিনিট</strong> (প্রতি প্রশ্নে ৩০ সেকেন্ড)<br>⚠️ একবার উত্তর সিলেক্ট করলে প্রশ্নটি লক হয়ে যাবে এবং পরিবর্তন করা যাবে না।</p>' +
+            '<div class="quiz-input-group">' +
+                '<input type="text" id="quiz-student-name" placeholder="আপনার পূর্ণ নাম লিখুন (যেমন: রাশেদ)">' +
+                '<select id="quiz-category-select">' + catOptionsHtml + '</select>' +
+                '<button onclick="startLiveQuiz(' + questionLimit + ')" class="quiz-start-btn">কুইজ শুরু করুন ▶</button>' +
+            '</div>' +
+        '</div>';
+
+    } catch (e) {
+        box.innerHTML = "<p style='text-align:center; color:red;'>কুইজ লোড করতে সমস্যা হচ্ছে, ইন্টারনেট সংযোগ চেক করুন।</p>";
+    }
+}
+
+function startLiveQuiz(questionLimit) {
+    var nameInput = document.getElementById('quiz-student-name').value.trim();
+    if (!nameInput) {
+        alert("দয়া করে কুইজ শুরু করার আগে আপনার নাম লিখুন!");
+        return;
+    }
+
+    quizStudentName = nameInput;
+    quizSelectedCategory = document.getElementById('quiz-category-select').value;
+    userQuizAnswers = {};
+    quizIsSubmitted = false;
+
+    var filtered = quizSelectedCategory === "ALL" ? allQuizBank.slice() : allQuizBank.filter(function(item) { return item.category === quizSelectedCategory; });
+    if (filtered.length === 0) filtered = allQuizBank.slice();
+
+    // প্রশ্ন এলোমেলো (Shuffle) করে নির্ধারিত সংখ্যায় নেওয়া
+    filtered.sort(function() { return 0.5 - Math.random(); });
+    activeQuizQuestions = filtered.slice(0, questionLimit);
+
+    // প্রতি প্রশ্নে ৩০ সেকেন্ড হিসেবে মোট সেকেন্ড নির্ধারণ
+    quizSecondsLeft = activeQuizQuestions.length * 30;
+    renderActiveQuizQuestions();
+    startQuizCountdown();
+}
+
+function renderActiveQuizQuestions() {
+    var box = document.getElementById('quiz-main-container');
+    var html = '<div class="quiz-sticky-bar">' +
+        '<span>👤 ' + quizStudentName + ' (' + (quizSelectedCategory === "ALL" ? "সকল বিষয়" : quizSelectedCategory) + ')</span>' +
+        '<span class="quiz-timer-badge" id="quiz-timer-display">⏱️ 05:00</span>' +
+    '</div>';
+
+    activeQuizQuestions.forEach(function(qObj, idx) {
+        html += '<div class="quiz-q-card" id="q-card-' + idx + '">' +
+            '<div class="quiz-q-title">' + (idx + 1) + '. ' + qObj.question + '</div>' +
+            '<div class="quiz-opt-list">';
+
+        ["A", "B", "C", "D"].forEach(function(optKey) {
+            if (qObj.options[optKey]) {
+                html += '<button class="quiz-opt-btn" id="opt-' + idx + '-' + optKey + '" onclick="selectAndLockOption(' + idx + ', \'' + optKey + '\')">' +
+                    '<strong>' + optKey + '.</strong> ' + qObj.options[optKey] +
+                '</button>';
+            }
+        });
+
+        html += '</div></div>';
+    });
+
+    html += '<div style="text-align:center; margin: 20px 0;">' +
+        '<button onclick="finishAndGradeQuiz(false)" class="quiz-start-btn" style="background:#27ae60; font-size:18px;">✓ কুইজ জমা দিন (Submit)</button>' +
+    '</div>';
+
+    box.innerHTML = html;
+    updateQuizTimerUI();
+}
+
+// সাইলেন্ট লকিং: উত্তর দেওয়ার সাথে সাথে প্রশ্নটি লক হবে, লাল/সবুজ দেখাবে না
+function selectAndLockOption(qIndex, chosenOpt) {
+    if (quizIsSubmitted || userQuizAnswers.hasOwnProperty(qIndex)) return;
+
+    userQuizAnswers[qIndex] = chosenOpt;
+
+    ["A", "B", "C", "D"].forEach(function(key) {
+        var btn = document.getElementById("opt-" + qIndex + "-" + key);
+        if (btn) {
+            btn.disabled = true; // প্রশ্নটি লক হয়ে গেল
+            if (key === chosenOpt) {
+                btn.classList.add("silent-selected");
+            }
+        }
+    });
+}
+
+function startQuizCountdown() {
+    clearInterval(quizTimerInterval);
+    quizTimerInterval = setInterval(function() {
+        quizSecondsLeft--;
+        updateQuizTimerUI();
+        if (quizSecondsLeft <= 0) {
+            clearInterval(quizTimerInterval);
+            finishAndGradeQuiz(true); // সময় শেষ হলে অটো লক ও সাবমিট
+        }
+    }, 1000);
+}
+
+function updateQuizTimerUI() {
+    var el = document.getElementById('quiz-timer-display');
+    if (!el) return;
+    var mins = Math.floor(quizSecondsLeft / 60);
+    var secs = quizSecondsLeft % 60;
+    el.innerText = "⏱️ " + (mins < 10 ? "0" + mins : mins) + ":" + (secs < 10 ? "0" + secs : secs);
+}
+
+// কুইজ শেষে অভিনন্দন কার্ড এবং সবুজ-লাল রঙ ও ব্যাখ্যাসহ রিভিউ
+function finishAndGradeQuiz(isTimeUp) {
+    if (quizIsSubmitted) return;
+    quizIsSubmitted = true;
+    clearInterval(quizTimerInterval);
+
+    var score = 0;
+    var total = activeQuizQuestions.length;
+
+    activeQuizQuestions.forEach(function(qObj, idx) {
+        if (userQuizAnswers[idx] === qObj.answer) {
+            score++;
+        }
+    });
+
+    var percent = Math.round((score / total) * 100);
+    var greetingTitle = percent >= 80 ? "মাশাআল্লাহ, অসাধারণ ফলাফল!" : (percent >= 50 ? "আলহামদুলিল্লাহ, ভালো চেষ্টা!" : "বারাকাল্লাহু ফীক, আরও অনুশীলন করুন!");
+
+    var box = document.getElementById('quiz-main-container');
+    var html = '';
+
+    if (isTimeUp) {html += '⏰ নির্ধারিত সময় শেষ হয়ে গেছে! আপনার উত্তরগুলো স্বয়ংক্রিয়ভাবে লক ও জমা নেওয়া হয়েছে।';
+}
+// হোয়াটসঅ্যাপে স্ক্রিনশট শেয়ার করার উপযোগী অভিনন্দন কার্ড
+html += '' +
+'🕌 কুরআনের পাখি — লাইভ কুইজ ফলাফল' +
+'' + greetingTitle + '' +
+'' + quizStudentName + '! আপনার স্কোর' +
+'' + score + ' / ' + total + ' (' + percent + '%)' +
+'বিষয়: ' + (quizSelectedCategory === "ALL" ? "সকল বিষয়" : quizSelectedCategory) + '' +
+'📸 এই কার্ডটির স্ক্রিনশট নিয়ে হোয়াটসঅ্যাপ গ্রুপে শেয়ার করুন' +
+'';
+html += '📋 উত্তরপত্র ও ব্যাখ্যা (Review):';
+activeQuizQuestions.forEach(function(qObj, idx) {
+var userChoice = userQuizAnswers[idx] || "উত্তর দেওয়া হয়নি";
+html += '' +
+'' + (idx + 1) + '. ' + qObj.question + '' +
+'';
+["A", "B", "C", "D"].forEach(function(optKey) {
+if (qObj.options[optKey]) {
+var btnClass = "quiz-opt-btn";
+var badgeText = "";
+if (optKey === qObj.answer) {
+btnClass += " review-correct";
+badgeText = " ✅ (সঠিক উত্তর)";
+} else if (optKey === userChoice && userChoice !== qObj.answer) {
+btnClass += " review-wrong";
+badgeText = " ❌ (আপনার উত্তর)";
+}
+html += '' +
+'' + optKey + '. ' + qObj.options[optKey] + badgeText +
+'';
+}
+});
+html += '';
+if (qObj.explanation) {
+html += '💡 ব্যাখ্যা: ' + qObj.explanation + '';
+}
+html += '';
+});
+html += '' +
+'🔄 হোমে ফিরে যান' +
+'';
+box.innerHTML = html;
+box.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
