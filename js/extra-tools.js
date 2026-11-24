@@ -854,17 +854,42 @@ function updateQuizTimerUI() {
     el.innerText = "⏱️ " + (mins < 10 ? "0" + mins : mins) + ":" + (secs < 10 ? "0" + secs : secs);
 }
 
-// হোয়াটসঅ্যাপ গ্রুপে সরাসরি ফলাফল শেয়ার করার ফাংশন
+// হোয়াটসঅ্যাপ গ্রুপে সরাসরি ফলাফল শেয়ার করার ফাংশন (অ্যাপ ও ব্রাউজার বান্ধব)
 function shareQuizOnWhatsApp(studentName, score, total, percent, category) {
     var catName = (category === "ALL") ? "সকল বিষয়" : category;
+    var siteLink = ["https:/", "quranerpakhi.github.io"].join("/");
     var shareMsg = "🕌 *কুরআনের পাখি — লাইভ কুইজ ফলাফল*\n\n" +
         "👤 *শিক্ষার্থীর নাম:* " + studentName + "\n" +
         "📚 *বিষয়:* " + catName + "\n" +
         "🏆 *প্রাপ্ত স্কোর:* " + score + " / " + total + " (" + percent + "%)\n\n" +
-        "আপনিও আরবী ভাষা শিখতে ও কুইজে অংশ নিতে ভিজিট করুন:\nhttps://github.io";
+        "আপনিও আরবী ভাষা শিখতে ও কুইজে অংশ নিতে ভিজিট করুন:\n" + siteLink;
 
-    var waUrl = "https://whatsapp.com" + encodeURIComponent(shareMsg);
-    window.open(waUrl, "_blank");
+    // ১. ব্যাকআপ হিসেবে ফলাফলটি ক্লিপবোর্ডে কপি করে রাখা
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareMsg).catch(function() {});
+    }
+
+    // ২. মোবাইল নেটিভ শেয়ার অপশন থাকলে সেটি চালু করা
+    if (navigator.share) {
+        navigator.share({
+            title: "কুরআনের পাখি — লাইভ কুইজ ফলাফল",
+            text: shareMsg
+        }).catch(function() {
+            openWhatsAppDirect(shareMsg);
+        });
+    } else {
+        openWhatsAppDirect(shareMsg);
+    }
+}
+
+function openWhatsAppDirect(text) {
+    var waScheme = ["whatsapp:/", "send?text="].join("/") + encodeURIComponent(text);
+    window.location.href = waScheme;
+}
+
+function openClassWhatsAppGroup() {
+    var groupUrl = ["https:/", "chat.whatsapp.com", "K1eiIiJnGeqEn4paXn0FZ6"].join("/");
+    window.location.href = groupUrl;
 }
 
 // কুইজ শেষে অভিনন্দন কার্ড এবং সবুজ-লাল রঙ ও ব্যাখ্যাসহ রিভিউ
@@ -894,15 +919,16 @@ function finishAndGradeQuiz(isTimeUp) {
         html += '<div style="background:#fadbd8; color:#78281f; padding:12px; border-radius:8px; margin-bottom:15px; font-weight:bold; text-align:center;">⏰ নির্ধারিত সময় শেষ হয়ে গেছে! আপনার উত্তরগুলো স্বয়ংক্রিয়ভাবে লক ও জমা নেওয়া হয়েছে।</div>';
     }
 
-    // অভিনন্দন কার্ড + সরাসরি হোয়াটসঅ্যাপ শেয়ার বাটন
+    // অভিনন্দন কার্ড + হোয়াটসঅ্যাপ শেয়ার ও গ্রুপ বাটন
     html += '<div class="congrats-card" style="background: linear-gradient(135deg, #008080, #16a085); color: #ffffff; border-radius: 16px; padding: 28px 20px; text-align: center; margin-bottom: 24px; box-shadow: 0 10px 25px rgba(0, 128, 128, 0.25); border: 4px solid #f1c40f;">' +
         '<div style="font-size:15px; opacity:0.95; margin-bottom:6px;">🕌 কুরআনের পাখি — লাইভ কুইজ ফলাফল</div>' +
         '<h3 style="font-size:24px; margin:8px 0; color:#ffffff;">' + greetingTitle + '</h3>' +
         '<p style="font-size:20px; margin:8px 0; color:#ffffff;"><strong>' + quizStudentName + '</strong>! আপনার স্কোর</p>' +
         '<div class="congrats-score-circle" style="background:#ffffff; color:#008080; display:inline-block; padding:12px 28px; border-radius:30px; font-size:26px; font-weight:800; margin:12px 0; box-shadow:0 4px 10px rgba(0,0,0,0.15);">' + score + ' / ' + total + ' (' + percent + '%)</div>' +
         '<div style="font-size:15px; margin-top:8px; color:#ffffff;">বিষয়: ' + (quizSelectedCategory === "ALL" ? "সকল বিষয়" : quizSelectedCategory) + '</div>' +
-        '<div style="margin-top:16px;">' +
-            '<button onclick="shareQuizOnWhatsApp(\'' + safeName + '\', ' + score + ', ' + total + ', ' + percent + ', \'' + safeCat + '\')" style="background:#25D366; color:#ffffff; border:2px solid #ffffff; padding:10px 20px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.2);">📤 হোয়াটসঅ্যাপ গ্রুপে শেয়ার করুন</button>' +
+        '<div style="margin-top:16px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">' +
+            '<button onclick="shareQuizOnWhatsApp(\'' + safeName + '\', ' + score + ', ' + total + ', ' + percent + ', \'' + safeCat + '\')" style="background:#25D366; color:#ffffff; border:2px solid #ffffff; padding:10px 20px; border-radius:25px; font-size:15px; font-weight:bold; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.2);">📤 ফলাফল শেয়ার করুন (WhatsApp)</button>' +
+            '<button onclick="openClassWhatsAppGroup()" style="background:#128C7E; color:#ffffff; border:2px solid #ffffff; padding:10px 18px; border-radius:25px; font-size:14px; font-weight:bold; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.2);">👥 ক্লাস গ্রুপে যান</button>' +
         '</div>' +
     '</div>';
 
