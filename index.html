@@ -53,6 +53,8 @@
             <a href="#prayer-section" onclick="togglePrayerTimes()" class="opt-btn prayer">নামাজের সময়সূচি (Prayer Times)</a>
             <a href="#stopwatch-section" onclick="toggleStopwatch()" class="opt-btn stopwatch">স্টপওয়াচ ও টাইমার (Stopwatch)</a>
             <a href="#sarf-section" onclick="toggleSarf()" class="opt-btn sarf">ক্রিয়া রূপান্তর (Sarf Table)</a>
+            <a href="#qibla-section" onclick="toggleQibla()" class="opt-btn qibla">কিবলা কম্পাস (Qibla)</a>
+
 
 
         </div>
@@ -207,6 +209,52 @@
 
         <!-- ফলাফল ও ট্যাব কন্টেইনার -->
         <div id="sarf-result-area" style="margin-top: 20px;"></div>
+    </section>
+    <!-- মডার্ন মিনিমালিস্ট কিবলা কম্পাস (Qibla Compass) সেকশন -->
+    <section id="qibla-section" class="dictionary-container" style="display: none;">
+        <h2>🧭 কিবলা কম্পাস (Qibla Direction)</h2>
+        <p id="qibla-location-status">সঠিক দিক নির্ণয়ের জন্য ফোনটি সমতলভাবে হাতে রাখুন</p>
+
+        <div class="qibla-wrapper">
+            <!-- স্ট্যাটাস ব্যাজ -->
+            <div id="qibla-match-badge" class="qibla-badge">ফোনটি ঘুরিয়ে কাবা আইকনকে ওপরের তীরের সাথে মেলান</div>
+
+            <!-- স্থির ওপরের নির্দেশক তীর -->
+            <div class="qibla-top-marker">▼</div>
+
+            <!-- ঘূর্ণায়মান কম্পাস ডায়াল -->
+            <div class="compass-outer-ring" id="compass-ring">
+                <div class="compass-dial" id="compass-dial">
+                    <span class="dir-mark dir-n">N</span>
+                    <span class="dir-mark dir-e">E</span>
+                    <span class="dir-mark dir-s">S</span>
+                    <span class="dir-mark dir-w">W</span>
+
+                    <!-- কাবা নির্দেশক কাঁটা -->
+                    <div class="qibla-pointer-arm" id="qibla-pointer-arm">
+                        <div class="kaaba-icon-box">🕋</div>
+                        <div class="pointer-line"></div>
+                    </div>
+
+                    <div class="compass-center-dot"></div>
+                </div>
+            </div>
+
+            <!-- তথ্য কার্ড -->
+            <div class="qibla-info-grid">
+                <div class="qibla-info-box">
+                    <span>কিবলার কোণ</span>
+                    <strong id="qibla-angle-text">২৭৭.৫° (পশ্চিম)</strong>
+                </div>
+                <div class="qibla-info-box">
+                    <span>কাবা শরিফের দূরত্ব</span>
+                    <strong id="qibla-distance-text">৫,১৭৫ কি.মি.</strong>
+                </div>
+            </div>
+
+            <!-- আইফোন বা সেন্সর অনুমতি বাটন -->
+            <button id="qibla-perm-btn" onclick="requestCompassPermission()" class="qibla-action-btn">📍 লোকেশন ও সেন্সর আপডেট করুন</button>
+        </div>
     </section>
 
     <!-- সার্ভিস/নোট সেকশন -->
