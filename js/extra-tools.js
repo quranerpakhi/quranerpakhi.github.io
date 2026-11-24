@@ -1,6 +1,6 @@
 // খোলা সেকশন বন্ধ করার সহায়ক ফাংশন
 function closeOtherBoxes(keepId) {
-    var ids = ['donate-modal', 'notes', 'dictionary-section', 'quran-section', 'dua-section', 'qa-section', 'about-section', 'contact-section', 'prayer-section', 'stopwatch-section'];
+    var ids = ['donate-modal', 'notes', 'dictionary-section', 'quran-section', 'dua-section', 'qa-section', 'about-section', 'contact-section', 'prayer-section', 'stopwatch-section', 'qibla-section'];
     ids.forEach(function(id) {
         if (id !== keepId) {
             var el = document.getElementById(id);
@@ -488,5 +488,133 @@ function renderSarfTabs(activeTab) {
     }
 
     html += '</tbody></table></div>';
+    
     area.innerHTML = html;
+}
+// ৭. মডার্ন মিনিমালিস্ট কিবলা কম্পাস (Qibla Compass)
+var qiblaBearing = 277.5; // ডিফল্ট ঢাকা, বাংলাদেশ
+var qiblaVibrated = false;
+
+function toggleQibla() {
+    var sec = document.getElementById('qibla-section');
+    if (!sec) return;
+    if (sec.style.display === 'block') {
+        sec.style.display = 'none';
+    } else {
+        closeOtherBoxes('qibla-section');
+        sec.style.display = 'block';
+        sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        initQiblaCompass();
+    }
+}
+
+function toBanglaDigits(str) {
+    var bn = ["০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯"];
+    return str.toString().replace(/\d/g, function(d) { return bn.at(parseInt(d, 10)); });
+}
+
+// জিপিএস লোকেশন অনুযায়ী কাবা শরিফের (21.4225° N, 39.8262° E) সঠিক কোণ ও দূরত্ব নির্ণয়
+function calculateQiblaFromCoords(lat, lon) {
+    var kaabaLat = 21.422487 * Math.PI / 180;
+    var kaabaLon = 39.826206 * Math.PI / 180;
+    var userLat = lat * Math.PI / 180;
+    var userLon = lon * Math.PI / 180;
+
+    var dLon = kaabaLon - userLon;
+    var y = Math.sin(dLon) * Math.cos(kaabaLat);
+    var x = Math.cos(userLat) * Math.sin(kaabaLat) - Math.sin(userLat) * Math.cos(kaabaLat) * Math.cos(dLon);
+    var bearing = Math.atan2(y, x) * 180 / Math.PI;
+    qiblaBearing = (bearing + 360) % 360;
+
+    // দূরত্ব নির্ণয় (Haversine formula)
+    var R = 6371;
+    var dLat = kaabaLat - userLat;
+    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(userLat) * Math.cos(kaabaLat) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    var distanceKm = Math.round(R * c);
+
+    var pointerArm = document.getElementById('qibla-pointer-arm');
+    if (pointerArm) {
+        pointerArm.style.transform = "rotate(" + qiblaBearing + "deg)";
+    }
+
+    var angleEl = document.getElementById('qibla-angle-text');
+    var distEl = document.getElementById('qibla-distance-text');
+    if (angleEl) angleEl.innerText = toBanglaDigits(qiblaBearing.toFixed(1)) + "° (পশ্চিম)";
+    if (distEl) distEl.innerText = toBanglaDigits(distanceKm.toLocaleString()) + " কি.মি.";
+}
+
+function initQiblaCompass() {
+    // শুরুতে ডিফল্ট ঢাকা কোণ সেট করা
+    calculateQiblaFromCoords(23.8103, 90.4125);
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(pos) {
+            calculateQiblaFromCoords(pos.coords.latitude, pos.coords.longitude);
+            var status = document.getElementById('qibla-location-status');
+            if (status) status.innerText = "✓ আপনার বর্তমান জিপিএস লোকেশন অনুযায়ী দিক নির্ধারিত হয়েছে";
+        }, function() {
+            var status = document.getElementById('qibla-location-status');
+            if (status) status.innerText = "📍 ডিফল্ট লোকেশন (ঢাকা) অনুযায়ী দিক দেখানো হচ্ছে";
+        });
+    }
+
+    startCompassListener();
+}
+
+function requestCompassPermission() {
+    initQiblaCompass();
+    if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
+        DeviceOrientationEvent.requestPermission().then(function(state) {
+            if (state === "granted") {
+                startCompassListener();
+            }
+        }).catch(console.error);
+    }
+}
+
+function startCompassListener() {
+    window.addEventListener("deviceorientationabsolute", handleOrientation, true);
+    window.addEventListener("deviceorientation", handleOrientation, true);
+}
+
+function handleOrientation(event) {
+    var heading = null;
+    if (event.webkitCompassHeading !== undefined) {
+        heading = event.webkitCompassHeading; // iOS
+    } else if (event.alpha !== null) {
+        heading = 360 - event.alpha; // Android
+    }
+
+    if (heading === null) return;
+
+    var dial = document.getElementById('compass-dial');
+    var ring = document.getElementById('compass-ring');
+    var badge = document.getElementById('qibla-match-badge');
+
+    if (dial) {
+        dial.style.transform = "rotate(" + (-heading) + "deg)";
+    }
+
+    // কিবলার সাথে ফোনটি মিলেছে কি না তা যাচাই (±৪ ডিগ্রি সীমার মধ্যে)
+    var diff = Math.abs(((heading - qiblaBearing + 540) % 360) - 180);
+    if (diff <= 4) {
+        if (ring) ring.classList.add('aligned');
+        if (badge) {
+            badge.classList.add('aligned');
+            badge.innerText = "✓ মাশাআল্লাহ! আপনি এখন সঠিক কিবলামুখী আছেন";
+        }
+        if (!qiblaVibrated && navigator.vibrate) {
+            navigator.vibrate(100);
+            qiblaVibrated = true;
+        }
+    } else {
+        if (ring) ring.classList.remove('aligned');
+        if (badge) {
+            badge.classList.remove('aligned');
+            badge.innerText = "ফোনটি ঘুরিয়ে কাবা আইকনকে ওপরের তীরের সাথে মেলান";
+        }
+        qiblaVibrated = false;
+    }
 }
