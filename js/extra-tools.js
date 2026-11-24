@@ -656,7 +656,6 @@ function toggleQuiz() {
     }
 }
 
-
 function parseCsvRows(csvText) {
     var lines = csvText.split(/\r?\n/);
     var result = [];
@@ -684,8 +683,7 @@ async function initLiveQuizGate() {
     box.innerHTML = "<p style='text-align:center; color:#e67e22; font-size:17px;'>⏳ লাইভ কুইজের অবস্থা যাচাই করা হচ্ছে...</p>";
 
     try {
-        // ক্যাশ এড়াতে টাইমস্ট্যাম্প যোগ করা হলো যাতে ON/OFF সাথে সাথে কাজ করে
-        var ctrlRes = await fetch(QUIZ_CONTROL_CSV + "&t=" + Date.now());
+        var ctrlRes = await fetch(buildQuizCsvUrl("470246912"));
         var ctrlText = await ctrlRes.text();
         var ctrlRows = parseCsvRows(ctrlText);
 
@@ -699,7 +697,6 @@ async function initLiveQuizGate() {
             if (key === "questioncount") questionLimit = parseInt(val, 10) || 10;
         });
 
-        // ক্লাস শুরু না হলে বা কুইজ OFF থাকলে লুকানো মেসেজ দেখাবে
         if (quizStatus !== "ON") {
             box.innerHTML = '<div class="quiz-setup-card">' +
                 '<div style="font-size:42px; margin-bottom:10px;">⏳</div>' +
@@ -710,8 +707,7 @@ async function initLiveQuizGate() {
             return;
         }
 
-        // প্রশ্ন লোড করা
-        var qRes = await fetch(QUIZ_QUESTIONS_CSV + "&t=" + Date.now());
+        var qRes = await fetch(buildQuizCsvUrl("0"));
         var qText = await qRes.text();
         var qRows = parseCsvRows(qText).slice(1);
 
@@ -760,6 +756,7 @@ async function initLiveQuizGate() {
         box.innerHTML = "<p style='text-align:center; color:red;'>কুইজ লোড করতে সমস্যা হচ্ছে, ইন্টারনেট সংযোগ চেক করুন।</p>";
     }
 }
+
 
 function startLiveQuiz(questionLimit) {
     var nameInput = document.getElementById('quiz-student-name').value.trim();
