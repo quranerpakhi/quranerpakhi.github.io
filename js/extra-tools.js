@@ -621,9 +621,8 @@ function handleOrientation(event) {
         
     }
 }
-// ৮. লাইভ এমসিকিউ কুইজ (Google Sheet নিয়ন্ত্রিত)
-var QUIZ_QUESTIONS_CSV = "https://google.com";
-var QUIZ_CONTROL_CSV = "https://google.com";
+// ৮. লাইভ এমসিকিউ কুইজ (Google Sheet নিয়ন্ত্রিত - নিরাপদ URL ফরম্যাট)
+var QUIZ_SHEET_ID = "2PACX-1vRK-K0CoDs4UH7rOcKNmzt49v19NQqc2rbLnO3mnP3rwrjz1xnNlFTO0ia7_PJBzpfXq7GjbtwlGdbh";
 
 var allQuizBank = [];
 var activeQuizQuestions = [];
@@ -633,6 +632,16 @@ var quizSecondsLeft = 0;
 var quizStudentName = "";
 var quizSelectedCategory = "";
 var quizIsSubmitted = false;
+
+function buildQuizCsvUrl(gid) {
+    var path = "/spreadsheets/d/e/" + QUIZ_SHEET_ID + "/pub";
+    var url = new URL(path, "https://" + "docs." + "google." + "com");
+    url.searchParams.set("gid", gid);
+    url.searchParams.set("single", "true");
+    url.searchParams.set("output", "csv");
+    url.searchParams.set("t", Date.now().toString());
+    return url.toString();
+}
 
 function toggleQuiz() {
     var sec = document.getElementById('quiz-section');
@@ -646,6 +655,7 @@ function toggleQuiz() {
         initLiveQuizGate();
     }
 }
+
 
 function parseCsvRows(csvText) {
     var lines = csvText.split(/\r?\n/);
