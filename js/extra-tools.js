@@ -870,50 +870,63 @@ function finishAndGradeQuiz(isTimeUp) {
     var greetingTitle = percent >= 80 ? "মাশাআল্লাহ, অসাধারণ ফলাফল!" : (percent >= 50 ? "আলহামদুলিল্লাহ, ভালো চেষ্টা!" : "বারাকাল্লাহু ফীক, আরও অনুশীলন করুন!");
 
     var box = document.getElementById('quiz-main-container');
-    var html = '';
+    var html = "";
 
-    if (isTimeUp) {html += '⏰ নির্ধারিত সময় শেষ হয়ে গেছে! আপনার উত্তরগুলো স্বয়ংক্রিয়ভাবে লক ও জমা নেওয়া হয়েছে।';
-}
-// হোয়াটসঅ্যাপে স্ক্রিনশট শেয়ার করার উপযোগী অভিনন্দন কার্ড
-html += '' +
-'🕌 কুরআনের পাখি — লাইভ কুইজ ফলাফল' +
-'' + greetingTitle + '' +
-'' + quizStudentName + '! আপনার স্কোর' +
-'' + score + ' / ' + total + ' (' + percent + '%)' +
-'বিষয়: ' + (quizSelectedCategory === "ALL" ? "সকল বিষয়" : quizSelectedCategory) + '' +
-'📸 এই কার্ডটির স্ক্রিনশট নিয়ে হোয়াটসঅ্যাপ গ্রুপে শেয়ার করুন' +
-'';
-html += '📋 উত্তরপত্র ও ব্যাখ্যা (Review):';
-activeQuizQuestions.forEach(function(qObj, idx) {
-var userChoice = userQuizAnswers[idx] || "উত্তর দেওয়া হয়নি";
-html += '' +
-'' + (idx + 1) + '. ' + qObj.question + '' +
-'';
-["A", "B", "C", "D"].forEach(function(optKey) {
-if (qObj.options[optKey]) {
-var btnClass = "quiz-opt-btn";
-var badgeText = "";
-if (optKey === qObj.answer) {
-btnClass += " review-correct";
-badgeText = " ✅ (সঠিক উত্তর)";
-} else if (optKey === userChoice && userChoice !== qObj.answer) {
-btnClass += " review-wrong";
-badgeText = " ❌ (আপনার উত্তর)";
-}
-html += '' +
-'' + optKey + '. ' + qObj.options[optKey] + badgeText +
-'';
-}
-});
-html += '';
-if (qObj.explanation) {
-html += '💡 ব্যাখ্যা: ' + qObj.explanation + '';
-}
-html += '';
-});
-html += '' +
-'🔄 হোমে ফিরে যান' +
-'';
-box.innerHTML = html;
-box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (isTimeUp) {
+        html += '<div style="background:#fadbd8; color:#78281f; padding:12px; border-radius:8px; margin-bottom:15px; font-weight:bold; text-align:center;">⏰ নির্ধারিত সময় শেষ হয়ে গেছে! আপনার উত্তরগুলো স্বয়ংক্রিয়ভাবে লক ও জমা নেওয়া হয়েছে।</div>';
+    }
+
+    // হোয়াটসঅ্যাপে স্ক্রিনশট শেয়ার করার উপযোগী অভিনন্দন কার্ড
+    html += '<div class="congrats-card" style="background: linear-gradient(135deg, #008080, #16a085); color: #ffffff; border-radius: 16px; padding: 28px 20px; text-align: center; margin-bottom: 24px; box-shadow: 0 10px 25px rgba(0, 128, 128, 0.25); border: 4px solid #f1c40f;">' +
+        '<div style="font-size:15px; opacity:0.95; margin-bottom:6px;">🕌 কুরআনের পাখি — লাইভ কুইজ ফলাফল</div>' +
+        '<h3 style="font-size:24px; margin:8px 0; color:#ffffff;">' + greetingTitle + '</h3>' +
+        '<p style="font-size:20px; margin:8px 0; color:#ffffff;"><strong>' + quizStudentName + '</strong>! আপনার স্কোর</p>' +
+        '<div class="congrats-score-circle" style="background:#ffffff; color:#008080; display:inline-block; padding:12px 28px; border-radius:30px; font-size:26px; font-weight:800; margin:12px 0; box-shadow:0 4px 10px rgba(0,0,0,0.15);">' + score + ' / ' + total + ' (' + percent + '%)</div>' +
+        '<div style="font-size:15px; margin-top:8px; color:#ffffff;">বিষয়: ' + (quizSelectedCategory === "ALL" ? "সকল বিষয়" : quizSelectedCategory) + '</div>' +
+        '<div style="font-size:13px; margin-top:12px; background:rgba(0,0,0,0.18); color:#ffffff; display:inline-block; padding:6px 14px; border-radius:15px;">📸 এই কার্ডটির স্ক্রিনশট নিয়ে হোয়াটসঅ্যাপ গ্রুপে শেয়ার করুন</div>' +
+    '</div>';
+
+    html += '<h3 style="text-align:left; color:#2c3e50; margin-bottom:14px; font-size:19px;">📋 উত্তরপত্র ও ব্যাখ্যা (Review):</h3>';
+
+    activeQuizQuestions.forEach(function(qObj, idx) {
+        var userChoice = userQuizAnswers[idx] || "উত্তর দেওয়া হয়নি";
+        html += '<div class="quiz-q-card" style="background:#ffffff; border:1px solid #e0e0e0; border-radius:10px; padding:18px; margin-bottom:16px; text-align:left; box-shadow:0 2px 8px rgba(0,0,0,0.04);">' +
+            '<div class="quiz-q-title" style="font-size:18px; font-weight:bold; color:#2c3e50; margin-bottom:12px;">' + (idx + 1) + '. ' + qObj.question + '</div>' +
+            '<div class="quiz-opt-list" style="display:flex; flex-direction:column; gap:8px;">';
+
+        ["A", "B", "C", "D"].forEach(function(optKey) {
+            if (qObj.options[optKey]) {
+                var btnClass = "quiz-opt-btn";
+                var badgeText = "";
+                var extraStyle = "background:#f8f9fa; border:2px solid #dee2e6; border-radius:8px; padding:11px 15px; text-align:left; font-size:16px; color:#333333; width:100%; display:block;";
+
+                if (optKey === qObj.answer) {
+                    btnClass += " review-correct";
+                    badgeText = " ✅ (সঠিক উত্তর)";
+                    extraStyle = "background:#d4efdf; border:2px solid #27ae60; border-radius:8px; padding:11px 15px; text-align:left; font-size:16px; color:#145a32; font-weight:bold; width:100%; display:block;";
+                } else if (optKey === userChoice && userChoice !== qObj.answer) {
+                    btnClass += " review-wrong";
+                    badgeText = " ❌ (আপনার উত্তর)";
+                    extraStyle = "background:#fadbd8; border:2px solid #e74c3c; border-radius:8px; padding:11px 15px; text-align:left; font-size:16px; color:#78281f; font-weight:bold; width:100%; display:block;";
+                }
+
+                html += '<button class="' + btnClass + '" style="' + extraStyle + '" disabled>' +
+                    '<strong>' + optKey + '.</strong> ' + qObj.options[optKey] + badgeText +
+                '</button>';
+            }
+        });
+
+        html += '</div>';
+        if (qObj.explanation) {
+            html += '<div class="quiz-explanation-box" style="margin-top:10px; padding:10px 14px; background:#fef9e7; border-left:4px solid #f1c40f; border-radius:6px; font-size:14px; color:#555555;">💡 <strong>ব্যাখ্যা:</strong> ' + qObj.explanation + '</div>';
+        }
+        html += '</div>';
+    });
+
+    html += '<div style="text-align:center; margin:20px 0;">' +
+        '<button onclick="initLiveQuizGate()" class="quiz-start-btn" style="background:#008080; color:#ffffff; border:none; padding:12px 26px; border-radius:8px; font-size:16px; font-weight:bold; cursor:pointer;">🔄 হোমে ফিরে যান</button>' +
+    '</div>';
+
+    box.innerHTML = html;
+    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
