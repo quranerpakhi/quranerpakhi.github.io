@@ -1,6 +1,6 @@
 // খোলা সেকশন বন্ধ করার সহায়ক ফাংশন
 function closeOtherBoxes(keepId) {
-    var ids = ['donate-modal', 'notes', 'dictionary-section', 'quran-section', 'dua-section', 'qa-section', 'about-section', 'contact-section', 'prayer-section', 'stopwatch-section', 'qibla-section', 'quiz-section', 'sudoku-section'];
+    var ids = ['donate-modal', 'notes', 'dictionary-section', 'quran-section', 'dua-section', 'qa-section', 'about-section', 'contact-section', 'prayer-section', 'stopwatch-section', 'sarf-section', 'qibla-section', 'quiz-section', 'sudoku-section'];
     ids.forEach(function(id) {
         if (id !== keepId) {
             var el = document.getElementById(id);
