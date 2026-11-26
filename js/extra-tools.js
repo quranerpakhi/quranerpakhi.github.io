@@ -1247,7 +1247,6 @@ function inputSudokuNumber(num) {
         if (idx === -1) sdkNotesGrid[r][c].push(num);
         else sdkNotesGrid[r][c].splice(idx, 1);
         renderSudokuBoard();
-        renderSudokuNumpad();
         return;
     }
 
@@ -1258,6 +1257,7 @@ function inputSudokuNumber(num) {
         sdkMistakes++;
         updateSudokuMistakeUI();
         renderSudokuBoard();
+        renderSudokuNumpad();
 
         if (sdkMistakes >= 3) {
             sdkGameOver = true;
@@ -1270,6 +1270,7 @@ function inputSudokuNumber(num) {
     }
 
     renderSudokuBoard();
+    renderSudokuNumpad(); // ৯টি সংখ্যা পূর্ণ হওয়ার সাথে সাথেই বাটনটি লক করবে
     checkSudokuWin();
 }
 
@@ -1281,6 +1282,7 @@ function eraseSudokuCell() {
     sdkUserGrid[r][c] = 0;
     sdkNotesGrid[r][c] = [];
     renderSudokuBoard();
+    renderSudokuNumpad();
 }
 
 function useSudokuHint() {
@@ -1294,9 +1296,10 @@ function useSudokuHint() {
     sdkHintsLeft--;
     document.getElementById('sudoku-hint-btn').innerText = "💡 হিন্ট (" + sdkHintsLeft + ")";
     renderSudokuBoard();
-    renderSudokuNumpad();
+    renderSudokuNumpad(); // হিন্ট দিয়ে ৯টি পূর্ণ হলেও বাটনটি লক করবে
     checkSudokuWin();
 }
+
 
 function checkSudokuWin() {
     for (var r = 0; r < 9; r++) {
