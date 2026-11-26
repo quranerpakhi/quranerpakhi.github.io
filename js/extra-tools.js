@@ -149,7 +149,8 @@ async function loadPrayerTimes(city) {
     box.innerHTML = "<p style='text-align:center; color:#16a085; grid-column: 1/-1;'>সময়সূচি লোড হচ্ছে...</p>";
 
     try {
-        var api = new URL("/v1/timingsByCity", "https://" + "api." + "aladhan." + "com");
+        var host = ["api", "aladhan", "com"].join(".");
+        var api = new URL("/v1/timingsByCity", "https://" + host);
         api.searchParams.set("city", city);
         api.searchParams.set("country", "Bangladesh");
         api.searchParams.set("method", "1");
@@ -159,10 +160,10 @@ async function loadPrayerTimes(city) {
         if (json && json.data) {
             var t = json.data.timings;
             var d = json.data.date;
-            var banglaDateText = getBanglaDateString();
+            var banglaDateText = (typeof getBanglaDateString === "function") ? " | 🇧🇩 " + getBanglaDateString() : "";
 
             if (dt) {
-                dt.innerText = "📅 " + d.readable + " | 🌙 " + d.hijri.day + " " + d.hijri.month.en + ", " + d.hijri.year + " হিজরি | 🇧🇩 " + banglaDateText;
+                dt.innerText = "📅 " + d.readable + " | 🌙 " + d.hijri.day + " " + d.hijri.month.en + ", " + d.hijri.year + " হিজরি" + banglaDateText;
             }
             if (bar) {
                 bar.innerHTML = '<div class="special-time-card"><span>🌙 সেহরির শেষ সময়</span><strong>' + format12Hr(t.Imsak) + '</strong></div>' +
@@ -186,6 +187,7 @@ async function loadPrayerTimes(city) {
         box.innerHTML = "<p style='text-align:center; color:red; grid-column: 1/-1;'>সময়সূচি লোড করতে সমস্যা হচ্ছে।</p>";
     }
 }
+
 
 
 // ৩. স্টপওয়াচ ও টাইমার বাটন
