@@ -1205,11 +1205,28 @@ function renderSudokuNumpad() {
     var pad = document.getElementById('sudoku-numpad');
     if (!pad) return;
     var html = "";
+
     for (var n = 1; n <= 9; n++) {
-        html += '<button class="sudoku-num-btn" onclick="inputSudokuNumber(' + n + ')">' + formatSdkDigit(n) + '</button>';
+        // বোর্ডে এই সংখ্যাটি কতবার সঠিকভাবে বসেছে তা গণনা করা
+        var correctCount = 0;
+        for (var r = 0; r < 9; r++) {
+            for (var c = 0; c < 9; c++) {
+                if (sdkUserGrid[r][c] === n && sdkSolution[r][c] === n) {
+                    correctCount++;
+                }
+            }
+        }
+
+        var isCompleted = (correctCount >= 9);
+        if (isCompleted) {
+            html += '<button class="sudoku-num-btn" disabled style="opacity: 0.35; background: #e0e0e0; border-color: #b0b0b0; color: #777777; cursor: not-allowed;">' + formatSdkDigit(n) + '</button>';
+        } else {
+            html += '<button class="sudoku-num-btn" onclick="inputSudokuNumber(' + n + ')">' + formatSdkDigit(n) + '</button>';
+        }
     }
     pad.innerHTML = html;
 }
+
 
 function selectSudokuCell(r, c) {
     if (sdkGameOver) return;
