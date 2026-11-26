@@ -148,9 +148,28 @@ async function loadPrayerTimes(city) {
     if (!box) return;
     box.innerHTML = "<p style='text-align:center; color:#16a085; grid-column: 1/-1;'>সময়সূচি লোড হচ্ছে...</p>";
 
+    // ভেতরেই ১২ ঘণ্টার সময় ফরম্যাট করার ফাংশন (যাতে বাইরের ফাংশনের ওপর নির্ভর করতে না হয়)
+    function to12HourFormat(timeStr) {
+        if (!timeStr) return "--:--";
+        var cleanTime = timeStr.split(" ")[0];
+        var parts = cleanTime.split(":");
+        var hr = parseInt(parts[0], 10);
+        var min = parts[1] || "00";
+        var ampm = hr >= 12 ? "PM" : "AM";
+        hr = hr % 12;
+        if (hr === 0) hr = 12;
+        return (hr < 10 ? "0" + hr : hr) + ":" + min + " " + ampm;
+    }
+
     try {
+        var today = new Date();
+        var dd = String(today.getDate()).padStart(2, '0');
+        var mm = String(today.getMonth() + 1).padStart(2, '0');
+        var yyyy = today.getFullYear();
+        var dateParam = dd + "-" + mm + "-" + yyyy;
+
         var host = ["api", "aladhan", "com"].join(".");
-        var api = new URL("/v1/timingsByCity", "https://" + host);
+        var api = new URL("/v1/timingsByCity/" + dateParam, "https://" + host);
         api.searchParams.set("city", city);
         api.searchParams.set("country", "Bangladesh");
         api.searchParams.set("method", "1");
@@ -166,9 +185,9 @@ async function loadPrayerTimes(city) {
                 dt.innerText = "📅 " + d.readable + " | 🌙 " + d.hijri.day + " " + d.hijri.month.en + ", " + d.hijri.year + " হিজরি" + banglaDateText;
             }
             if (bar) {
-                bar.innerHTML = '<div class="special-time-card"><span>🌙 সেহরির শেষ সময়</span><strong>' + format12Hr(t.Imsak) + '</strong></div>' +
-                                '<div class="special-time-card"><span>🌅 সূর্যোদয়</span><strong>' + format12Hr(t.Sunrise) + '</strong></div>' +
-                                '<div class="special-time-card"><span>🌇 ইফতারের সময়</span><strong>' + format12Hr(t.Maghrib) + '</strong></div>';
+                bar.innerHTML = '<div class="special-time-card"><span>🌙 সেহরির শেষ সময়</span><strong>' + to12HourFormat(t.Imsak) + '</strong></div>' +
+                                '<div class="special-time-card"><span>🌅 সূর্যোদয়</span><strong>' + to12HourFormat(t.Sunrise) + '</strong></div>' +
+                                '<div class="special-time-card"><span>🌇 ইফতারের সময়</span><strong>' + to12HourFormat(t.Maghrib) + '</strong></div>';
             }
             var list = [
                 { n: "ফজর (Fajr)", tm: t.Fajr, ic: "🌌" },
@@ -179,16 +198,14 @@ async function loadPrayerTimes(city) {
             ];
             var html = "";
             list.forEach(function(item) {
-                html += '<div class="prayer-card"><div class="prayer-icon">' + item.ic + '</div><div class="prayer-name">' + item.n + '</div><div class="prayer-time">' + format12Hr(item.tm) + '</div></div>';
+                html += '<div class="prayer-card"><div class="prayer-icon">' + item.ic + '</div><div class="prayer-name">' + item.n + '</div><div class="prayer-time">' + to12HourFormat(item.tm) + '</div></div>';
             });
             box.innerHTML = html;
         }
     } catch (e) {
-        box.innerHTML = "<p style='text-align:center; color:red; grid-column: 1/-1;'>সময়সূচি লোড করতে সমস্যা হচ্ছে।</p>";
+        box.innerHTML = "<p style='text-align:center; color:red; grid-column: 1/-1;'>সময়সূচি লোড করতে সমস্যা হচ্ছে: " + e.message + "</p>";
     }
 }
-
-
 
 // ৩. স্টপওয়াচ ও টাইমার বাটন
 var swMode = 'stopwatch', swRun = false, swInt = null, swMs = 0, tmMs = 0, lastTick = 0, lapNo = 0;
