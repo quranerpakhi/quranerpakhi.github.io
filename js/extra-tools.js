@@ -1247,6 +1247,7 @@ function inputSudokuNumber(num) {
         if (idx === -1) sdkNotesGrid[r][c].push(num);
         else sdkNotesGrid[r][c].splice(idx, 1);
         renderSudokuBoard();
+        renderSudokuNumpad();
         return;
     }
 
