@@ -1294,6 +1294,7 @@ function useSudokuHint() {
     sdkHintsLeft--;
     document.getElementById('sudoku-hint-btn').innerText = "💡 হিন্ট (" + sdkHintsLeft + ")";
     renderSudokuBoard();
+    renderSudokuNumpad();
     checkSudokuWin();
 }
 
