@@ -55,6 +55,8 @@
             <a href="#sarf-section" onclick="toggleSarf()" class="opt-btn sarf">ক্রিয়া রূপান্তর (Sarf Table)</a>
             <a href="#qibla-section" onclick="toggleQibla()" class="opt-btn qibla">কিবলা কম্পাস (Qibla)</a>
             <a href="#quiz-section" onclick="toggleQuiz()" class="opt-btn quiz">লাইভ কুইজ (MCQ Quiz)</a>
+            <a href="#sudoku-section" onclick="toggleSudoku()" class="opt-btn sudoku">ব্রেইন সুডোকু (Sudoku)</a>
+
 
         </div>
     </section>
@@ -260,6 +262,47 @@
     <section id="quiz-section" class="dictionary-container" style="display: none;">
         <h2>📝 লাইভ এমসিকিউ কুইজ (MCQ Quiz)</h2>
         <div id="quiz-main-container" style="max-width: 750px; margin: 15px auto 0 auto;"></div>
+    </section>
+    <!-- আরবী ও ইংরেজি সংখ্যা সুইচসহ ক্লাসিক ৯×৯ সুডোকু সেকশন -->
+    <section id="sudoku-section" class="dictionary-container" style="display: none;">
+        <h2>🧩 ব্রেইন সুডোকু (Mind Focus Sudoku)</h2>
+        <p>মনোযোগ ও যুক্তি শক্তি বৃদ্ধির জন্য আরবী বা ইংরেজি সংখ্যায় সুডোকু খেলুন</p>
+
+        <div class="sudoku-wrapper">
+            <!-- টপ কন্ট্রোল বার: লেভেল ও সংখ্যা সুইচ -->
+            <div class="sudoku-top-controls">
+                <select id="sudoku-level" onchange="startNewSudoku()">
+                    <option value="easy">সহজ (Easy)</option>
+                    <option value="medium">মাঝারি (Medium)</option>
+                    <option value="hard">কঠিন (Hard)</option>
+                </select>
+
+                <button id="sudoku-num-toggle" onclick="toggleSudokuNumerals()" class="sudoku-pill-btn">সংখ্যা: ইংরেজি (1-9)</button>
+                <button onclick="startNewSudoku()" class="sudoku-pill-btn new-game">🔄 নতুন খেলা</button>
+            </div>
+
+            <!-- স্ট্যাটাস বার: ভুল (Mistakes) ও টাইমার -->
+            <div class="sudoku-status-bar">
+                <span id="sudoku-mistakes">❌ ভুল: 0 / 3</span>
+                <span id="sudoku-timer">⏱️ 00:00</span>
+            </div>
+
+            <!-- ৯×৯ সুডোকু বোর্ড -->
+            <div id="sudoku-board" class="sudoku-grid"></div>
+
+            <!-- অ্যাকশন টুলস: পেন্সিল নোট, মুছুন, হিন্ট -->
+            <div class="sudoku-tools-row">
+                <button id="sudoku-notes-btn" onclick="toggleSudokuNotes()" class="sudoku-tool-btn">✏️ পেন্সিল নোট: OFF</button>
+                <button onclick="eraseSudokuCell()" class="sudoku-tool-btn">🧹 মুছুন</button>
+                <button id="sudoku-hint-btn" onclick="useSudokuHint()" class="sudoku-tool-btn">💡 হিন্ট (2)</button>
+            </div>
+
+            <!-- ১-৯ নাম্বার প্যাড -->
+            <div id="sudoku-numpad" class="sudoku-numpad"></div>
+
+            <!-- খেলা শেষ বা গেম ওভার মেসেজ বক্স -->
+            <div id="sudoku-message-box"></div>
+        </div>
     </section>
 
     <!-- সার্ভিস/নোট সেকশন -->
