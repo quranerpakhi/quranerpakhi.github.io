@@ -1462,4 +1462,165 @@ nav a, .nav-links a, header nav a {
     margin: 12px 0;
     box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }
+/* ব্রেইন সুডোকু (৯×৯ টিল-সবুজ ও সাদা ডিজাইন) */
+.opt-btn.sudoku { border-left: 5px solid #008080; }
+
+.sudoku-wrapper {
+    max-width: 440px;
+    margin: 15px auto 0 auto;
+    text-align: center;
+}
+
+.sudoku-top-controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.sudoku-top-controls select, .sudoku-pill-btn {
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: 2px solid #008080;
+    background: #ffffff;
+    color: #008080;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    outline: none;
+}
+
+.sudoku-pill-btn.new-game {
+    background: #008080;
+    color: #ffffff;
+}
+
+.sudoku-status-bar {
+    display: flex;
+    justify-content: space-between;
+    background: #f0f7f7;
+    border: 1px solid #b2d8d8;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 15px;
+    color: #006666;
+    margin-bottom: 12px;
+}
+
+.sudoku-grid {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border: 3px solid #008080;
+    background: #ffffff;
+    box-shadow: 0 6px 20px rgba(0, 128, 128, 0.15);
+    user-select: none;
+}
+
+.sudoku-cell {
+    border: 1px solid #cce5e5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+    font-weight: bold;
+    cursor: pointer;
+    position: relative;
+    background: #ffffff;
+    color: #008080;
+    transition: background 0.15s;
+}
+
+/* ৩×৩ বক্সের গাঢ় সীমানা */
+.sudoku-cell.border-right-bold { border-right: 3px solid #008080; }
+.sudoku-cell.border-bottom-bold { border-bottom: 3px solid #008080; }
+
+/* স্থির (আগে থেকে দেওয়া) সংখ্যা */
+.sudoku-cell.given {
+    background: #f4fafa;
+    color: #2c3e50;
+}
+
+/* সিলেক্ট করা ঘর ও একই সংখ্যা হাইলাইট */
+.sudoku-cell.selected {
+    background: #b2dfdb !important;
+}
+
+.sudoku-cell.highlight-same {
+    background: #e0f2f1;
+}
+
+/* ভুল সংখ্যা দিলে লাল সংকেত */
+.sudoku-cell.wrong-val {
+    background: #fadbd8 !important;
+    color: #c0392b !important;
+}
+
+/* পেন্সিল নোট গ্রিড */
+.sudoku-notes-mini {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    width: 100%;
+    height: 100%;
+    font-size: 9px;
+    line-height: 1;
+    color: #666666;
+    padding: 1px;
+}
+
+.sudoku-notes-mini span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sudoku-tools-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin: 14px 0 10px 0;
+}
+
+.sudoku-tool-btn {
+    flex: 1;
+    padding: 9px 10px;
+    border-radius: 8px;
+    border: 1px solid #008080;
+    background: #ffffff;
+    color: #008080;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.sudoku-tool-btn.active-note {
+    background: #008080;
+    color: #ffffff;
+}
+
+.sudoku-numpad {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.sudoku-num-btn {
+    padding: 12px 0;
+    font-size: 20px;
+    font-weight: bold;
+    border-radius: 8px;
+    border: 2px solid #008080;
+    background: #f0f7f7;
+    color: #006666;
+    cursor: pointer;
+}
+
+.sudoku-num-btn:active {
+    background: #008080;
+    color: #ffffff;
+}
 
