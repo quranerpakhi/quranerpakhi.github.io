@@ -992,6 +992,7 @@ var sdkUseArabic = false;
 var sdkTimerInt = null;
 var sdkSeconds = 0;
 var sdkGameOver = false;
+var sdkPaused = false;
 
 var ARABIC_DIGITS = ["", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
 
@@ -1000,18 +1001,60 @@ function formatSdkDigit(n) {
     return sdkUseArabic ? ARABIC_DIGITS.at(n) : n.toString();
 }
 
+// সুডোকু টাইমার চালু বা পুনরায় শুরু করার সহায়ক ফাংশন
+function runSudokuTimer() {
+    clearInterval(sdkTimerInt);
+    sdkTimerInt = setInterval(function() {
+        if (!sdkGameOver && !sdkPaused) {
+            sdkSeconds++;
+            var m = Math.floor(sdkSeconds / 60);
+            var s = sdkSeconds % 60;
+            var tEl = document.getElementById('sudoku-timer');
+            if (tEl) {
+                tEl.innerHTML = '⏱️ ' + (m < 10 ? "0" + m : m) + ':' + (s < 10 ? "0" + s : s) +
+                    ' <button onclick="toggleSudokuPause()" style="margin-left:6px; background:#008080; color:#ffffff; border:none; border-radius:4px; padding:2px 7px; font-size:12px; cursor:pointer;">' + (sdkPaused ? '▶️' : '⏸️') + '</button>';
+            }
+        }
+    }, 1000);
+}
+
+function toggleSudokuPause() {
+    if (sdkGameOver) return;
+    sdkPaused = !sdkPaused;
+    var board = document.getElementById('sudoku-board');
+    var m = Math.floor(sdkSeconds / 60);
+    var s = sdkSeconds % 60;
+    var tEl = document.getElementById('sudoku-timer');
+    if (tEl) {
+        tEl.innerHTML = '⏱️ ' + (m < 10 ? "0" + m : m) + ':' + (s < 10 ? "0" + s : s) +
+            ' <button onclick="toggleSudokuPause()" style="margin-left:6px; background:#008080; color:#ffffff; border:none; border-radius:4px; padding:2px 7px; font-size:12px; cursor:pointer;">' + (sdkPaused ? '▶️' : '⏸️') + '</button>';
+    }
+    if (board) {
+        board.style.opacity = sdkPaused ? "0.15" : "1";
+        board.style.pointerEvents = sdkPaused ? "none" : "auto";
+    }
+}
+
 function toggleSudoku() {
     var sec = document.getElementById('sudoku-section');
     if (!sec) return;
     if (sec.style.display === 'block') {
         sec.style.display = 'none';
-        clearInterval(sdkTimerInt);
+        clearInterval(sdkTimerInt); // বন্ধ করলে সময় থেমে যাবে
     } else {
         closeOtherBoxes('sudoku-section');
         sec.style.display = 'block';
         sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
         if (sdkSolution.length === 0) {
             startNewSudoku();
+        } else if (!sdkGameOver) {
+            sdkPaused = false;
+            var board = document.getElementById('sudoku-board');
+            if (board) {
+                board.style.opacity = "1";
+                board.style.pointerEvents = "auto";
+            }
+            runSudokuTimer(); // পুনরায় খুললে আগের জায়গা থেকেই সময় চালু হবে
         }
     }
 }
@@ -1035,7 +1078,6 @@ function toggleSudokuNotes() {
     }
 }
 
-// ব্যাকট্র্যাকিং অ্যালগরিদম দিয়ে নতুন বৈধ ৯×৯ সুডোকু বোর্ড তৈরি
 function generateValidSudokuBoard() {
     var grid = Array.from({ length: 9 }, function() { return Array(9).fill(0); });
 
@@ -1097,25 +1139,23 @@ function startNewSudoku() {
     sdkMistakes = 0;
     sdkHintsLeft = 2;
     sdkGameOver = false;
+    sdkPaused = false;
     sdkSeconds = 0;
+
+    var board = document.getElementById('sudoku-board');
+    if (board) {
+        board.style.opacity = "1";
+        board.style.pointerEvents = "auto";
+    }
 
     document.getElementById('sudoku-message-box').innerHTML = "";
     document.getElementById('sudoku-hint-btn').innerText = "💡 হিন্ট (2)";
     updateSudokuMistakeUI();
     renderSudokuBoard();
     renderSudokuNumpad();
-
-    clearInterval(sdkTimerInt);
-    sdkTimerInt = setInterval(function() {
-        if (!sdkGameOver) {
-            sdkSeconds++;
-            var m = Math.floor(sdkSeconds / 60);
-            var s = sdkSeconds % 60;
-            var tEl = document.getElementById('sudoku-timer');
-            if (tEl) tEl.innerText = "⏱️ " + (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
-        }
-    }, 1000);
+    runSudokuTimer();
 }
+
 
 function updateSudokuMistakeUI() {
     var el = document.getElementById('sudoku-mistakes');
