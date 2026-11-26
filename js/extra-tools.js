@@ -1275,122 +1275,137 @@ function renderSudokuBoard() {
                 inner += '</div>';
             }
 
-html += '<div class="' + classes.join(" ") + '" onclick="selectSudokuCell(' + r + ', ' + c + ')">' + inner + '';
+            html += '<div class="' + classes.join(" ") + '" onclick="selectSudokuCell(' + r + ', ' + c + ')">' + inner + '</div>';
+        }
+    }
+    board.innerHTML = html;
 }
-}
-board.innerHTML = html;
-}
+
 function renderSudokuNumpad() {
-var pad = document.getElementById('sudoku-numpad');
-if (!pad) return;
-var html = "";
-for (var n = 1; n <= 9; n++) {
-var correctCount = 0;
-for (var r = 0; r < 9; r++) {
-for (var c = 0; c < 9; c++) {
-if (sdkUserGrid[r][c] === n && sdkSolution[r][c] === n) {
-correctCount++;
+    var pad = document.getElementById('sudoku-numpad');
+    if (!pad) return;
+    var html = "";
+
+    for (var n = 1; n <= 9; n++) {
+        var correctCount = 0;
+        for (var r = 0; r < 9; r++) {
+            for (var c = 0; c < 9; c++) {
+                if (sdkUserGrid[r][c] === n && sdkSolution[r][c] === n) {
+                    correctCount++;
+                }
+            }
+        }
+
+        var isCompleted = (correctCount >= 9);
+        if (isCompleted) {
+            html += '<button class="sudoku-num-btn" disabled style="opacity: 0.35; background: #e0e0e0; border-color: #b0b0b0; color: #777777; cursor: not-allowed;">' + formatSdkDigit(n) + '</button>';
+        } else {
+            html += '<button class="sudoku-num-btn" onclick="inputSudokuNumber(' + n + ')">' + formatSdkDigit(n) + '</button>';
+        }
+    }
+    pad.innerHTML = html;
 }
-}
-}
-var isCompleted = (correctCount >= 9);
-if (isCompleted) {
-html += '' + formatSdkDigit(n) + '';
-} else {
-html += '' + formatSdkDigit(n) + '';
-}
-}
-pad.innerHTML = html;
-}
+
 function selectSudokuCell(r, c) {
-if (sdkGameOver) return;
-sdkSelected = { r: r, c: c };
-renderSudokuBoard();
+    if (sdkGameOver) return;
+    sdkSelected = { r: r, c: c };
+    renderSudokuBoard();
 }
+
 function inputSudokuNumber(num) {
-if (sdkGameOver || sdkSelected.r === -1) return;
-var r = sdkSelected.r;
-var c = sdkSelected.c;
-if (sdkGivenGrid[r][c]) return;
-if (sdkNotesMode) {
-if (sdkUserGrid[r][c] !== 0) return;
-var idx = sdkNotesGrid[r][c].indexOf(num);
-if (idx === -1) sdkNotesGrid[r][c].push(num);
-else sdkNotesGrid[r][c].splice(idx, 1);
-saveSudokuState();
-renderSudokuBoard();
-return;
+    if (sdkGameOver || sdkSelected.r === -1) return;
+    var r = sdkSelected.r;
+    var c = sdkSelected.c;
+    if (sdkGivenGrid[r][c]) return;
+
+    if (sdkNotesMode) {
+        if (sdkUserGrid[r][c] !== 0) return;
+        var idx = sdkNotesGrid[r][c].indexOf(num);
+        if (idx === -1) sdkNotesGrid[r][c].push(num);
+        else sdkNotesGrid[r][c].splice(idx, 1);
+        saveSudokuState();
+        renderSudokuBoard();
+        return;
+    }
+
+    sdkUserGrid[r][c] = num;
+    sdkNotesGrid[r][c] = [];
+
+    if (num !== sdkSolution[r][c]) {
+        sdkMistakes++;
+        updateSudokuMistakeUI();
+        renderSudokuBoard();
+        renderSudokuNumpad();
+
+        if (sdkMistakes >= 3) {
+            sdkGameOver = true;
+            clearInterval(sdkTimerInt);
+            localStorage.removeItem(SUDOKU_STORAGE_KEY);
+            document.getElementById('sudoku-message-box').innerHTML =
+                '<div style="background:#fadbd8; color:#78281f; padding:14px; border-radius:10px; font-weight:bold; margin-top:10px;">' +
+                '❌ ৩টি ভুল হয়ে গেছে! গেম ওভার।<br><button onclick="startNewSudoku()" class="sudoku-pill-btn new-game" style="margin-top:8px;">🔄 আবার চেষ্টা করুন</button></div>';
+        } else {
+            saveSudokuState();
+        }
+        return;
+    }
+
+    saveSudokuState();
+    renderSudokuBoard();
+    renderSudokuNumpad();
+    checkSudokuWin();
 }
-sdkUserGrid[r][c] = num;
-sdkNotesGrid[r][c] = [];
-if (num !== sdkSolution[r][c]) {
-sdkMistakes++;
-updateSudokuMistakeUI();
-renderSudokuBoard();
-renderSudokuNumpad();
-if (sdkMistakes >= 3) {
-sdkGameOver = true;
-clearInterval(sdkTimerInt);
-localStorage.removeItem(SUDOKU_STORAGE_KEY);
-document.getElementById('sudoku-message-box').innerHTML =
-'' +
-'❌ ৩টি ভুল হয়ে গেছে! গেম ওভার।
-🔄 আবার চেষ্টা করুন';
-} else {
-saveSudokuState();
-}
-return;
-}
-saveSudokuState();
-renderSudokuBoard();
-renderSudokuNumpad();
-checkSudokuWin();
-}
+
 function eraseSudokuCell() {
-if (sdkGameOver || sdkSelected.r === -1) return;
-var r = sdkSelected.r;
-var c = sdkSelected.c;
-if (sdkGivenGrid[r][c]) return;
-sdkUserGrid[r][c] = 0;
-sdkNotesGrid[r][c] = [];
-saveSudokuState();
-renderSudokuBoard();
-renderSudokuNumpad();
+    if (sdkGameOver || sdkSelected.r === -1) return;
+    var r = sdkSelected.r;
+    var c = sdkSelected.c;
+    if (sdkGivenGrid[r][c]) return;
+    sdkUserGrid[r][c] = 0;
+    sdkNotesGrid[r][c] = [];
+    saveSudokuState();
+    renderSudokuBoard();
+    renderSudokuNumpad();
 }
+
 function useSudokuHint() {
-if (sdkGameOver || sdkHintsLeft <= 0 || sdkSelected.r === -1) return;
-var r = sdkSelected.r;
-var c = sdkSelected.c;
-if (sdkGivenGrid[r][c] || sdkUserGrid[r][c] === sdkSolution[r][c]) return;
-sdkUserGrid[r][c] = sdkSolution[r][c];
-sdkNotesGrid[r][c] = [];
-sdkHintsLeft--;
-document.getElementById('sudoku-hint-btn').innerText = "💡 হিন্ট (" + sdkHintsLeft + ")";
-saveSudokuState();
-renderSudokuBoard();
-renderSudokuNumpad();
-checkSudokuWin();
+    if (sdkGameOver || sdkHintsLeft <= 0 || sdkSelected.r === -1) return;
+    var r = sdkSelected.r;
+    var c = sdkSelected.c;
+    if (sdkGivenGrid[r][c] || sdkUserGrid[r][c] === sdkSolution[r][c]) return;
+
+    sdkUserGrid[r][c] = sdkSolution[r][c];
+    sdkNotesGrid[r][c] = [];
+    sdkHintsLeft--;
+    document.getElementById('sudoku-hint-btn').innerText = "💡 হিন্ট (" + sdkHintsLeft + ")";
+    saveSudokuState();
+    renderSudokuBoard();
+    renderSudokuNumpad();
+    checkSudokuWin();
 }
+
 function checkSudokuWin() {
-for (var r = 0; r < 9; r++) {
-for (var c = 0; c < 9; c++) {
-if (sdkUserGrid[r][c] !== sdkSolution[r][c]) return;
+    for (var r = 0; r < 9; r++) {
+        for (var c = 0; c < 9; c++) {
+            if (sdkUserGrid[r][c] !== sdkSolution[r][c]) return;
+        }
+    }
+    sdkGameOver = true;
+    clearInterval(sdkTimerInt);
+    localStorage.removeItem(SUDOKU_STORAGE_KEY);
+    var m = Math.floor(sdkSeconds / 60);
+    var s = sdkSeconds % 60;
+    var timeStr = (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
+
+    document.getElementById('sudoku-message-box').innerHTML =
+        '<div style="background: linear-gradient(135deg, #008080, #16a085); color:#ffffff; padding:18px; border-radius:12px; margin-top:12px; border:3px solid #f1c40f;">' +
+        '<h3 style="margin:0 0 6px 0; color:#ffffff;">🎉 মাশাআল্লাহ! সুডোকু সমাধান সম্পন্ন!</h3>' +
+        '<p style="margin:0; font-size:16px;">মোট সময় লেগেছে: <strong>' + timeStr + '</strong> | ভুল: <strong>' + sdkMistakes + '/3</strong></p>' +
+        '<button onclick="startNewSudoku()" style="margin-top:12px; background:#ffffff; color:#008080; border:none; padding:8px 18px; border-radius:20px; font-weight:bold; cursor:pointer;">▶ নতুন সুডোকু খেলুন</button>' +
+        '</div>';
 }
-}
-sdkGameOver = true;
-clearInterval(sdkTimerInt);
-localStorage.removeItem(SUDOKU_STORAGE_KEY);
-var m = Math.floor(sdkSeconds / 60);
-var s = sdkSeconds % 60;
-var timeStr = (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
-document.getElementById('sudoku-message-box').innerHTML =
-'' +
-'🎉 মাশাআল্লাহ! সুডোকু সমাধান সম্পন্ন!' +
-'মোট সময় লেগেছে: ' + timeStr + ' | ভুল: ' + sdkMistakes + '/3' +
-'▶ নতুন সুডোকু খেলুন' +
-'';
-}
+
 // ব্রাউজার বা অ্যাপ হঠাৎ বন্ধ করার মুহূর্তেও খেলার অবস্থা সেভ রাখা
 window.addEventListener("beforeunload", function() {
-saveSudokuState();
+    saveSudokuState();
 });
