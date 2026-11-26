@@ -979,7 +979,7 @@ function finishAndGradeQuiz(isTimeUp) {
     box.innerHTML = html;
     box.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
-// ৯. আরবী ও ইংরেজি সংখ্যা সুইচসহ ক্লাসিক ৯×৯ সুডোকু গেম
+// ৯. আরবী ও ইংরেজি সংখ্যা সুইচসহ ক্লাসিক ৯×৯ সুডোকু গেম (Auto-Save সহ)
 var sdkSolution = [];
 var sdkUserGrid = [];
 var sdkGivenGrid = [];
@@ -995,24 +995,103 @@ var sdkGameOver = false;
 var sdkPaused = false;
 
 var ARABIC_DIGITS = ["", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
+var SUDOKU_STORAGE_KEY = "quraner_pakhi_sudoku_save_v1";
 
 function formatSdkDigit(n) {
     if (!n || n === 0) return "";
     return sdkUseArabic ? ARABIC_DIGITS.at(n) : n.toString();
 }
 
-// সুডোকু টাইমার চালু বা পুনরায় শুরু করার সহায়ক ফাংশন
+// খেলার বর্তমান অবস্থা ব্রাউজার/অ্যাপে স্থায়ীভাবে সেভ রাখা
+function saveSudokuState() {
+    if (sdkGameOver || sdkSolution.length === 0) {
+        localStorage.removeItem(SUDOKU_STORAGE_KEY);
+        return;
+    }
+    var levelEl = document.getElementById('sudoku-level');
+    var state = {
+        solution: sdkSolution,
+        userGrid: sdkUserGrid,
+        givenGrid: sdkGivenGrid,
+        notesGrid: sdkNotesGrid,
+        mistakes: sdkMistakes,
+        hintsLeft: sdkHintsLeft,
+        useArabic: sdkUseArabic,
+        seconds: sdkSeconds,
+        level: levelEl ? levelEl.value : 'easy'
+    };
+    try {
+        localStorage.setItem(SUDOKU_STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {}
+}
+
+// সেভ করা খেলা পুনরায় লোড করা
+function loadSavedSudokuState() {
+    try {
+        var raw = localStorage.getItem(SUDOKU_STORAGE_KEY);
+        if (!raw) return false;
+        var state = JSON.parse(raw);
+        if (!state || !state.solution || state.solution.length !== 9) return false;
+
+        sdkSolution = state.solution;
+        sdkUserGrid = state.userGrid;
+        sdkGivenGrid = state.givenGrid;
+        sdkNotesGrid = state.notesGrid;
+        sdkMistakes = state.mistakes || 0;
+        sdkHintsLeft = (state.hintsLeft !== undefined) ? state.hintsLeft : 2;
+        sdkUseArabic = !!state.useArabic;
+        sdkSeconds = state.seconds || 0;
+        sdkSelected = { r: -1, c: -1 };
+        sdkGameOver = false;
+        sdkPaused = false;
+
+        var levelEl = document.getElementById('sudoku-level');
+        if (levelEl && state.level) levelEl.value = state.level;
+
+        var numBtn = document.getElementById('sudoku-num-toggle');
+        if (numBtn) numBtn.innerText = sdkUseArabic ? "সংখ্যা: আরবী (١-٩)" : "সংখ্যা: ইংরেজি (1-9)";
+
+        var hintBtn = document.getElementById('sudoku-hint-btn');
+        if (hintBtn) hintBtn.innerText = "💡 হিন্ট (" + sdkHintsLeft + ")";
+
+        var board = document.getElementById('sudoku-board');
+        if (board) {
+            board.style.opacity = "1";
+            board.style.pointerEvents = "auto";
+        }
+
+        document.getElementById('sudoku-message-box').innerHTML = "";
+        updateSudokuMistakeUI();
+        renderSudokuBoard();
+        renderSudokuNumpad();
+        updateSudokuTimerDisplay();
+        runSudokuTimer();
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+function updateSudokuTimerDisplay() {
+    var m = Math.floor(sdkSeconds / 60);
+    var s = sdkSeconds % 60;
+    var tEl = document.getElementById('sudoku-timer');
+    if (tEl) {
+        tEl.innerHTML = '⏱️ ' + (m < 10 ? "0" + m : m) + ':' + (s < 10 ? "0" + s : s) +
+            ' <button onclick="toggleSudokuPause()" style="margin-left:6px; background:#008080; color:#ffffff; border:none; border-radius:4px; padding:2px 7px; font-size:12px; cursor:pointer;">' + (sdkPaused ? '▶️' : '⏸️') + '</button>';
+    }
+}
+
 function runSudokuTimer() {
     clearInterval(sdkTimerInt);
+    updateSudokuTimerDisplay();
     sdkTimerInt = setInterval(function() {
         if (!sdkGameOver && !sdkPaused) {
             sdkSeconds++;
-            var m = Math.floor(sdkSeconds / 60);
-            var s = sdkSeconds % 60;
-            var tEl = document.getElementById('sudoku-timer');
-            if (tEl) {
-                tEl.innerHTML = '⏱️ ' + (m < 10 ? "0" + m : m) + ':' + (s < 10 ? "0" + s : s) +
-                    ' <button onclick="toggleSudokuPause()" style="margin-left:6px; background:#008080; color:#ffffff; border:none; border-radius:4px; padding:2px 7px; font-size:12px; cursor:pointer;">' + (sdkPaused ? '▶️' : '⏸️') + '</button>';
+            updateSudokuTimerDisplay();
+            // প্রতি ৫ সেকেন্ড পরপর সময় অটো-সেভ রাখা
+            if (sdkSeconds % 5 === 0) {
+                saveSudokuState();
             }
         }
     }, 1000);
@@ -1021,14 +1100,9 @@ function runSudokuTimer() {
 function toggleSudokuPause() {
     if (sdkGameOver) return;
     sdkPaused = !sdkPaused;
+    saveSudokuState();
+    updateSudokuTimerDisplay();
     var board = document.getElementById('sudoku-board');
-    var m = Math.floor(sdkSeconds / 60);
-    var s = sdkSeconds % 60;
-    var tEl = document.getElementById('sudoku-timer');
-    if (tEl) {
-        tEl.innerHTML = '⏱️ ' + (m < 10 ? "0" + m : m) + ':' + (s < 10 ? "0" + s : s) +
-            ' <button onclick="toggleSudokuPause()" style="margin-left:6px; background:#008080; color:#ffffff; border:none; border-radius:4px; padding:2px 7px; font-size:12px; cursor:pointer;">' + (sdkPaused ? '▶️' : '⏸️') + '</button>';
-    }
     if (board) {
         board.style.opacity = sdkPaused ? "0.15" : "1";
         board.style.pointerEvents = sdkPaused ? "none" : "auto";
@@ -1040,13 +1114,17 @@ function toggleSudoku() {
     if (!sec) return;
     if (sec.style.display === 'block') {
         sec.style.display = 'none';
-        clearInterval(sdkTimerInt); // বন্ধ করলে সময় থেমে যাবে
+        saveSudokuState();
+        clearInterval(sdkTimerInt);
     } else {
         closeOtherBoxes('sudoku-section');
         sec.style.display = 'block';
         sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
         if (sdkSolution.length === 0) {
-            startNewSudoku();
+            // সেভ করা খেলা থাকলে সেটি লোড করবে, না থাকলে নতুন শুরু করবে
+            if (!loadSavedSudokuState()) {
+                startNewSudoku();
+            }
         } else if (!sdkGameOver) {
             sdkPaused = false;
             var board = document.getElementById('sudoku-board');
@@ -1054,7 +1132,7 @@ function toggleSudoku() {
                 board.style.opacity = "1";
                 board.style.pointerEvents = "auto";
             }
-            runSudokuTimer(); // পুনরায় খুললে আগের জায়গা থেকেই সময় চালু হবে
+            runSudokuTimer();
         }
     }
 }
@@ -1065,6 +1143,7 @@ function toggleSudokuNumerals() {
     if (btn) {
         btn.innerText = sdkUseArabic ? "সংখ্যা: আরবী (١-٩)" : "সংখ্যা: ইংরেজি (1-9)";
     }
+    saveSudokuState();
     renderSudokuBoard();
     renderSudokuNumpad();
 }
@@ -1116,6 +1195,7 @@ function generateValidSudokuBoard() {
 }
 
 function startNewSudoku() {
+    localStorage.removeItem(SUDOKU_STORAGE_KEY);
     var level = document.getElementById('sudoku-level') ? document.getElementById('sudoku-level').value : 'easy';
     var blanks = (level === 'easy') ? 34 : ((level === 'medium') ? 44 : 52);
 
@@ -1153,9 +1233,9 @@ function startNewSudoku() {
     updateSudokuMistakeUI();
     renderSudokuBoard();
     renderSudokuNumpad();
+    saveSudokuState();
     runSudokuTimer();
 }
-
 
 function updateSudokuMistakeUI() {
     var el = document.getElementById('sudoku-mistakes');
@@ -1195,128 +1275,122 @@ function renderSudokuBoard() {
                 inner += '</div>';
             }
 
-            html += '<div class="' + classes.join(" ") + '" onclick="selectSudokuCell(' + r + ', ' + c + ')">' + inner + '</div>';
-        }
-    }
-    board.innerHTML = html;
+html += '<div class="' + classes.join(" ") + '" onclick="selectSudokuCell(' + r + ', ' + c + ')">' + inner + '';
 }
-
+}
+board.innerHTML = html;
+}
 function renderSudokuNumpad() {
-    var pad = document.getElementById('sudoku-numpad');
-    if (!pad) return;
-    var html = "";
-
-    for (var n = 1; n <= 9; n++) {
-        // বোর্ডে এই সংখ্যাটি কতবার সঠিকভাবে বসেছে তা গণনা করা
-        var correctCount = 0;
-        for (var r = 0; r < 9; r++) {
-            for (var c = 0; c < 9; c++) {
-                if (sdkUserGrid[r][c] === n && sdkSolution[r][c] === n) {
-                    correctCount++;
-                }
-            }
-        }
-
-        var isCompleted = (correctCount >= 9);
-        if (isCompleted) {
-            html += '<button class="sudoku-num-btn" disabled style="opacity: 0.35; background: #e0e0e0; border-color: #b0b0b0; color: #777777; cursor: not-allowed;">' + formatSdkDigit(n) + '</button>';
-        } else {
-            html += '<button class="sudoku-num-btn" onclick="inputSudokuNumber(' + n + ')">' + formatSdkDigit(n) + '</button>';
-        }
-    }
-    pad.innerHTML = html;
+var pad = document.getElementById('sudoku-numpad');
+if (!pad) return;
+var html = "";
+for (var n = 1; n <= 9; n++) {
+var correctCount = 0;
+for (var r = 0; r < 9; r++) {
+for (var c = 0; c < 9; c++) {
+if (sdkUserGrid[r][c] === n && sdkSolution[r][c] === n) {
+correctCount++;
 }
-
-
+}
+}
+var isCompleted = (correctCount >= 9);
+if (isCompleted) {
+html += '' + formatSdkDigit(n) + '';
+} else {
+html += '' + formatSdkDigit(n) + '';
+}
+}
+pad.innerHTML = html;
+}
 function selectSudokuCell(r, c) {
-    if (sdkGameOver) return;
-    sdkSelected = { r: r, c: c };
-    renderSudokuBoard();
+if (sdkGameOver) return;
+sdkSelected = { r: r, c: c };
+renderSudokuBoard();
 }
-
 function inputSudokuNumber(num) {
-    if (sdkGameOver || sdkSelected.r === -1) return;
-    var r = sdkSelected.r;
-    var c = sdkSelected.c;
-    if (sdkGivenGrid[r][c]) return;
-
-    // পেন্সিল নোট মোড চালু থাকলে
-    if (sdkNotesMode) {
-        if (sdkUserGrid[r][c] !== 0) return;
-        var idx = sdkNotesGrid[r][c].indexOf(num);
-        if (idx === -1) sdkNotesGrid[r][c].push(num);
-        else sdkNotesGrid[r][c].splice(idx, 1);
-        renderSudokuBoard();
-        return;
-    }
-
-    sdkUserGrid[r][c] = num;
-    sdkNotesGrid[r][c] = [];
-
-    if (num !== sdkSolution[r][c]) {
-        sdkMistakes++;
-        updateSudokuMistakeUI();
-        renderSudokuBoard();
-        renderSudokuNumpad();
-
-        if (sdkMistakes >= 3) {
-            sdkGameOver = true;
-            clearInterval(sdkTimerInt);
-            document.getElementById('sudoku-message-box').innerHTML =
-                '<div style="background:#fadbd8; color:#78281f; padding:14px; border-radius:10px; font-weight:bold; margin-top:10px;">' +
-                '❌ ৩টি ভুল হয়ে গেছে! গেম ওভার।<br><button onclick="startNewSudoku()" class="sudoku-pill-btn new-game" style="margin-top:8px;">🔄 আবার চেষ্টা করুন</button></div>';
-        }
-        return;
-    }
-
-    renderSudokuBoard();
-    renderSudokuNumpad(); // ৯টি সংখ্যা পূর্ণ হওয়ার সাথে সাথেই বাটনটি লক করবে
-    checkSudokuWin();
+if (sdkGameOver || sdkSelected.r === -1) return;
+var r = sdkSelected.r;
+var c = sdkSelected.c;
+if (sdkGivenGrid[r][c]) return;
+if (sdkNotesMode) {
+if (sdkUserGrid[r][c] !== 0) return;
+var idx = sdkNotesGrid[r][c].indexOf(num);
+if (idx === -1) sdkNotesGrid[r][c].push(num);
+else sdkNotesGrid[r][c].splice(idx, 1);
+saveSudokuState();
+renderSudokuBoard();
+return;
 }
-
+sdkUserGrid[r][c] = num;
+sdkNotesGrid[r][c] = [];
+if (num !== sdkSolution[r][c]) {
+sdkMistakes++;
+updateSudokuMistakeUI();
+renderSudokuBoard();
+renderSudokuNumpad();
+if (sdkMistakes >= 3) {
+sdkGameOver = true;
+clearInterval(sdkTimerInt);
+localStorage.removeItem(SUDOKU_STORAGE_KEY);
+document.getElementById('sudoku-message-box').innerHTML =
+'' +
+'❌ ৩টি ভুল হয়ে গেছে! গেম ওভার।
+🔄 আবার চেষ্টা করুন';
+} else {
+saveSudokuState();
+}
+return;
+}
+saveSudokuState();
+renderSudokuBoard();
+renderSudokuNumpad();
+checkSudokuWin();
+}
 function eraseSudokuCell() {
-    if (sdkGameOver || sdkSelected.r === -1) return;
-    var r = sdkSelected.r;
-    var c = sdkSelected.c;
-    if (sdkGivenGrid[r][c]) return;
-    sdkUserGrid[r][c] = 0;
-    sdkNotesGrid[r][c] = [];
-    renderSudokuBoard();
-    renderSudokuNumpad();
+if (sdkGameOver || sdkSelected.r === -1) return;
+var r = sdkSelected.r;
+var c = sdkSelected.c;
+if (sdkGivenGrid[r][c]) return;
+sdkUserGrid[r][c] = 0;
+sdkNotesGrid[r][c] = [];
+saveSudokuState();
+renderSudokuBoard();
+renderSudokuNumpad();
 }
-
 function useSudokuHint() {
-    if (sdkGameOver || sdkHintsLeft <= 0 || sdkSelected.r === -1) return;
-    var r = sdkSelected.r;
-    var c = sdkSelected.c;
-    if (sdkGivenGrid[r][c] || sdkUserGrid[r][c] === sdkSolution[r][c]) return;
-
-    sdkUserGrid[r][c] = sdkSolution[r][c];
-    sdkNotesGrid[r][c] = [];
-    sdkHintsLeft--;
-    document.getElementById('sudoku-hint-btn').innerText = "💡 হিন্ট (" + sdkHintsLeft + ")";
-    renderSudokuBoard();
-    renderSudokuNumpad(); // হিন্ট দিয়ে ৯টি পূর্ণ হলেও বাটনটি লক করবে
-    checkSudokuWin();
+if (sdkGameOver || sdkHintsLeft <= 0 || sdkSelected.r === -1) return;
+var r = sdkSelected.r;
+var c = sdkSelected.c;
+if (sdkGivenGrid[r][c] || sdkUserGrid[r][c] === sdkSolution[r][c]) return;
+sdkUserGrid[r][c] = sdkSolution[r][c];
+sdkNotesGrid[r][c] = [];
+sdkHintsLeft--;
+document.getElementById('sudoku-hint-btn').innerText = "💡 হিন্ট (" + sdkHintsLeft + ")";
+saveSudokuState();
+renderSudokuBoard();
+renderSudokuNumpad();
+checkSudokuWin();
 }
-
-
 function checkSudokuWin() {
-    for (var r = 0; r < 9; r++) {
-        for (var c = 0; c < 9; c++) {
-            if (sdkUserGrid[r][c] !== sdkSolution[r][c]) return;
-        }
-    }
-    sdkGameOver = true;
-    clearInterval(sdkTimerInt);
-    var m = Math.floor(sdkSeconds / 60);
-    var s = sdkSeconds % 60;
-    var timeStr = (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
-
-    document.getElementById('sudoku-message-box').innerHTML =
-        '<div style="background: linear-gradient(135deg, #008080, #16a085); color:#ffffff; padding:18px; border-radius:12px; margin-top:12px; border:3px solid #f1c40f;">' +
-        '<h3 style="margin:0 0 6px 0; color:#ffffff;">🎉 মাশাআল্লাহ! সুডোকু সমাধান সম্পন্ন!</h3>' +
-        '<p style="margin:0; font-size:16px;">মোট সময় লেগেছে: <strong>' + timeStr + '</strong> | ভুল: <strong>' + sdkMistakes + '/3</strong></p>' +
-        '<button onclick="startNewSudoku()" style="margin-top:12px; background:#ffffff; color:#008080; border:none; padding:8px 18px; border-radius:20px; font-weight:bold; cursor:pointer;">▶ নতুন সুডোকু খেলুন</button>' +
-        '</div>';
+for (var r = 0; r < 9; r++) {
+for (var c = 0; c < 9; c++) {
+if (sdkUserGrid[r][c] !== sdkSolution[r][c]) return;
 }
+}
+sdkGameOver = true;
+clearInterval(sdkTimerInt);
+localStorage.removeItem(SUDOKU_STORAGE_KEY);
+var m = Math.floor(sdkSeconds / 60);
+var s = sdkSeconds % 60;
+var timeStr = (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
+document.getElementById('sudoku-message-box').innerHTML =
+'' +
+'🎉 মাশাআল্লাহ! সুডোকু সমাধান সম্পন্ন!' +
+'মোট সময় লেগেছে: ' + timeStr + ' | ভুল: ' + sdkMistakes + '/3' +
+'▶ নতুন সুডোকু খেলুন' +
+'';
+}
+// ব্রাউজার বা অ্যাপ হঠাৎ বন্ধ করার মুহূর্তেও খেলার অবস্থা সেভ রাখা
+window.addEventListener("beforeunload", function() {
+saveSudokuState();
+});
