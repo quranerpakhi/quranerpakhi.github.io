@@ -3,17 +3,16 @@
     "whatsapp_link": "https://chat.whatsapp.com/K1eiIiJnGeqEn4paXn0FZ6?s=cl&p=a&iam=2",
     "google_meet_link": "https://google.com"
   },
-   "regular_notes": [
+  "regular_notes": [
     {
       "title": "ক্লাস ১: প্রথম পাঠ (বাংলা অর্থসহ নোট)",
       "link": "প্রথম পাঠ (বাংলা অর্থসহ নোট).pdf"
     }
   ],
-
-   "extra_notes": [
+  "extra_notes": [
     {
       "title": "সূরা আন-নাজমের ৩৯ নং আয়াত",
       "link": "najm39.pdf"
     }
-  ],
-
+  ]
+}
