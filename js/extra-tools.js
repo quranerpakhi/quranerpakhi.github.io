@@ -1428,3 +1428,36 @@ function checkSudokuWin() {
 window.addEventListener("beforeunload", function() {
     saveSudokuState();
 });
+// ওপরের যেকোনো বাটন (ক্লাস নোট, অভিধান, কুরআন, দোআ ইত্যাদি) ক্লিক করলে নিচের অতিরিক্ত সেকশনগুলো অটো বন্ধ করা
+document.addEventListener("click", function(e) {
+    var btn = e.target.closest(".opt-btn");
+    if (!btn) return;
+
+    var onclickAttr = btn.getAttribute("onclick") || "";
+    var newSections = ["sarf-section", "qibla-section", "quiz-section", "sudoku-section"];
+    var mapFunc = {
+        "toggleSarf": "sarf-section",
+        "toggleQibla": "qibla-section",
+        "toggleQuiz": "quiz-section",
+        "toggleSudoku": "sudoku-section"
+    };
+
+    var activeTarget = "";
+    for (var fn in mapFunc) {
+        if (onclickAttr.indexOf(fn) !== -1) {
+            activeTarget = mapFunc[fn];
+            break;
+        }
+    }
+
+    newSections.forEach(function(secId) {
+        if (secId !== activeTarget) {
+            var el = document.getElementById(secId);
+            if (el) el.style.display = "none";
+            if (secId === "sudoku-section" && typeof sdkTimerInt !== "undefined") {
+                if (typeof saveSudokuState === "function") saveSudokuState();
+                clearInterval(sdkTimerInt);
+            }
+        }
+    });
+});
